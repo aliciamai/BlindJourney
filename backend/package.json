@@ -1,0 +1,30 @@
+{
+  "name": "blindjourney-backend",
+  "version": "1.0.0",
+  "description": "Backend API REST para BlindJourney - Aplicación de viajes sorpresa con IA",
+  "author": "Alicia Maillo",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.17.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "express-validator": "^7.1.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.10.1",
+    "stripe": "^16.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
+    "supertest": "^7.0.0"
+  }
+}

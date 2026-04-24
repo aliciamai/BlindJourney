@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlindJourney · API Tester</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --surf2:   #222536;
+      --border:  #2e3148;
+      --text:    #e2e8f0;
+      --text2:   #8892a4;
+      --green:   #10b981;
+      --yellow:  #f59e0b;
+      --red:     #ef4444;
+      --blue:    #3b82f6;
+      --purple:  #8b5cf6;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    nav { width: 210px; min-width: 210px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+    .nav-header { padding: 18px 16px 10px; font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: .08em; text-transform: uppercase; }
+    nav button { display: block; width: 100%; text-align: left; padding: 9px 16px; background: none; border: none; color: var(--text2); cursor: pointer; font-size: 13px; border-left: 3px solid transparent; transition: all .15s; }
+    nav button:hover { background: var(--surf2); color: var(--text); }
+    nav button.active { background: var(--surf2); color: var(--text); border-left-color: var(--blue); }
+    .nav-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ── Main ── */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Token bar ── */
+    .token-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .token-bar label { color: var(--text2); font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+    .token-display { flex: 1; font-family: monospace; font-size: 11px; color: var(--green); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .token-display.empty { color: var(--text2); font-style: italic; }
+    .token-bar button { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surf2); color: var(--text2); cursor: pointer; font-size: 12px; transition: all .15s; white-space: nowrap; }
+    .token-bar button:hover { color: var(--text); border-color: var(--blue); }
+
+    /* ── Sections ── */
+    .sections { flex: 1; overflow-y: auto; padding: 24px; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-title { font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+    .card-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; user-select: none; }
+    .card-header:hover { background: var(--surf2); }
+    .method { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 5px; letter-spacing: .05em; min-width: 58px; text-align: center; }
+    .GET    { background: #10b98120; color: var(--green);  }
+    .POST   { background: #3b82f620; color: var(--blue);   }
+    .PATCH  { background: #f59e0b20; color: var(--yellow); }
+    .PUT    { background: #8b5cf620; color: var(--purple); }
+    .DELETE { background: #ef444420; color: var(--red);    }
+    .card-url  { font-family: monospace; font-size: 13px; flex: 1; }
+    .card-desc { font-size: 12px; color: var(--text2); }
+    .lock      { font-size: 12px; color: var(--text2); margin-left: 4px; }
+
+    .card-body { padding: 16px; border-top: 1px solid var(--border); display: none; }
+    .card-body.open { display: block; }
+
+    /* ── Doc ── */
+    .doc { font-size: 12px; color: var(--text2); margin-bottom: 14px; line-height: 1.5; border-left: 3px solid var(--border); padding-left: 10px; }
+    .doc strong { color: var(--text); }
+
+    /* ── Form ── */
+    .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: .03em; }
+    .field input, .field textarea, .field select { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .15s; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--blue); }
+    .field textarea { resize: vertical; min-height: 60px; font-family: monospace; font-size: 12px; }
+    .field-full { grid-column: 1 / -1; }
+    .field-check { flex-direction: row; align-items: center; gap: 8px; padding-top: 18px; }
+    .field-check input { width: auto; }
+    .send-btn { padding: 8px 20px; background: var(--blue); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity .15s; }
+    .send-btn:hover { opacity: .85; }
+    .send-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Response ── */
+    .response { margin-top: 14px; }
+    .response-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .status-badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .s2xx { background: #10b98120; color: var(--green);  }
+    .s3xx { background: #f59e0b20; color: var(--yellow); }
+    .s4xx { background: #ef444420; color: var(--red);    }
+    .s5xx { background: #ef444420; color: var(--red);    }
+    .s0xx { background: #8b5cf620; color: var(--purple); }
+    .response-time { font-size: 12px; color: var(--text2); }
+    .response-route { font-size: 12px; color: var(--text2); font-family: monospace; }
+    pre.json { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; font-family: monospace; overflow-x: auto; white-space: pre-wrap; line-height: 1.5; }
+    .json-key  { color: #7dd3fc; }
+    .json-str  { color: #86efac; }
+    .json-num  { color: #fca5a5; }
+    .json-bool { color: #f9a8d4; }
+    .json-null { color: var(--text2); }
+
+    /* ── Log ── */
+    .log-entry { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .log-entry-header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; font-size: 12px; flex-wrap: wrap; }
+    .log-time { color: var(--text2); font-family: monospace; }
+    .log-url  { font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-entry pre.json { border-radius: 0; border: none; border-top: 1px solid var(--border); }
+    .empty-log { color: var(--text2); text-align: center; padding: 40px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<nav>
+  <div class="nav-header">BlindJourney</div>
+  <button data-nav="health" class="active">⚡ Health</button>
+  <div class="nav-sep"></div>
+  <button data-nav="auth">🔐 Auth</button>
+  <div class="nav-sep"></div>
+  <button data-nav="viajes">✈️ Viajes</button>
+  <button data-nav="reservas">📋 Reservas</button>
+  <button data-nav="itinerarios">🗓️ Itinerarios</button>
+  <button data-nav="perfil">👤 Perfil</button>
+  <button data-nav="notificaciones">🔔 Notificaciones</button>
+  <div class="nav-sep"></div>
+  <button data-nav="log">📜 Log</button>
+</nav>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<main>
+
+  <!-- Token bar -->
+  <div class="token-bar">
+    <label>JWT</label>
+    <div class="token-display empty" id="token-display">sin token — haz login primero</div>
+    <button id="btn-copy-token">Copiar</button>
+    <button id="btn-clear-token">Limpiar</button>
+  </div>
+
+  <div class="sections">
+
+    <!-- ════════ HEALTH ════════ -->
+    <div class="section active" id="section-health">
+      <div class="section-title">Health Check</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/health</span>
+          <span class="card-desc">Estado del servidor</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Comprueba que el servidor está vivo.<br><strong>Sin auth.</strong> Devuelve <code>{ status: "ok", timestamp }</code>.</p>
+          <button class="send-btn" data-action="health">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ AUTH ════════ -->
+    <div class="section" id="section-auth">
+      <div class="section-title">Auth</div>
+
+      <!-- Registro -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/registro</span>
+          <span class="card-desc">Crear cuenta nueva</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Crea la cuenta y envía email de verificación.<br>
+          Respuesta 201: <code>{ message, usuarioId }</code> · 409 si el email ya existe.</p>
+          <div class="fields">
+            <div class="field"><label>nombre *</label><input id="reg-nombre" value="Alicia"></div>
+            <div class="field"><label>apellidos *</label><input id="reg-apellidos" value="Maillo"></div>
+            <div class="field"><label>email *</label><input id="reg-email" type="email" value="alicia@example.com"></div>
+            <div class="field"><label>password * (min 8)</label><input id="reg-password" type="password" value="Password123!"></div>
+            <div class="field"><label>telefono (opcional)</label><input id="reg-telefono" value="+34 600000000"></div>
+          </div>
+          <button class="send-btn" data-action="registro">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Login -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/login</span>
+          <span class="card-desc">Login → guarda token automáticamente</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Devuelve <code>{ token, refreshToken, usuario }</code>.<br>
+          El token JWT se guarda automáticamente en la barra superior y en localStorage.<br>
+          El email debe estar verificado (403 <code>EMAIL_NOT_VERIFIED</code> si no).</p>
+          <div class="fields">
+            <div class="field"><label>email *</label><input id="login-email" type="email" value="alicia@example.com"></div>
+            <div class="field"><label>password *</label><input id="login-password" type="password" value="Password123!"></div>
+          </div>
+          <button class="send-btn" data-action="login">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/logout</span>
+          <span class="card-desc">Cerrar sesión (invalida refresh token)</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Elimina el refresh token de la BD. El JWT de acceso caduca solo (stateless).<br>
+          Body: <code>{ refreshToken? }</code> — se rellena automáticamente tras el login.</p>
+          <div class="fields">
+            <div class="field field-full"><label>refreshToken (se autocompleta)</label><input id="logout-refresh" placeholder="(vacío = no invalida refresh)"></div>
+          </div>
+          <button class="send-btn" data-action="logout">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Verificar email -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/auth/verificar/:token</span>
+          <span class="card-desc">Activar cuenta por email</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Activa la cuenta y redirige al frontend.<br>
+          El <code>:token</code> llega en el email de verificación (64 chars hex).</p>
+          <div class="fields">
+            <div class="field field-full"><label>token (param URL) *</label><input id="verif-token" placeholder="abc123... (del email)"></div>
+          </div>
+          <button class="send-btn" data-action="verificar-email">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Recuperar password -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/recuperar-password</span>
+          <span class="card-desc">Solicitar email de recuperación</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Genera token de reset (1 h) y manda email.<br>
+          Devuelve siempre 200 con el mismo mensaje (para no revelar qué emails existen).</p>
+          <div class="fields">
+            <div class="field"><label>email *</label><input id="recup-email" type="email" value="alicia@example.com"></div>
+          </div>
+          <button class="send-btn" data-action="recuperar-password">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Nueva password -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/nueva-password</span>
+          <span class="card-desc">Cambiar contraseña con token del email</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Usa el token del email de recuperación (caduca en 1 h).<br>
+          Body: <code>{ token, nuevaPassword }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>token * (del email)</label><input id="nueva-token" placeholder="abc123..."></div>
+            <div class="field"><label>nuevaPassword * (min 8)</label><input id="nueva-pass" type="password" value="NuevaPass456!"></div>
+          </div>
+          <button class="send-btn" data-action="nueva-password">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Refresh -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/refresh</span>
+          <span class="card-desc">Renovar JWT → guarda nuevo token</span>
+        </div>
+        <div class="card-body">
+          <p class="doc"><strong>Sin auth.</strong> Intercambia el refresh token por un nuevo JWT de acceso.<br>
+          Body: <code>{ refreshToken }</code> — se autocompleta tras el login.</p>
+          <div class="fields">
+            <div class="field field-full"><label>refreshToken *</label><input id="refresh-tok" placeholder="(se autocompleta tras login)"></div>
+          </div>
+          <button class="send-btn" data-action="refresh">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ VIAJES ════════ -->
+    <div class="section" id="section-viajes">
+      <div class="section-title">Viajes <span class="lock">🔒 requiere token</span></div>
+
+      <!-- Listar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes</span>
+          <span class="card-desc">Listar todos los viajes del usuario</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Devuelve <code>{ items: [], message }</code>. Filtra automáticamente por el usuario del JWT.</p>
+          <button class="send-btn" data-action="viajes-list">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Obtener por ID -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes/:id</span>
+          <span class="card-desc">Obtener un viaje por ID</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Devuelve el detalle de un viaje. 404 si no pertenece al usuario.</p>
+          <div class="fields">
+            <div class="field"><label>id *</label><input id="viaje-id-get" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="viajes-get">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Crear -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/viajes</span>
+          <span class="card-desc">Crear viaje sorpresa</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Body: <code>{ destino, presupuesto?, fechaInicio?, duracion? }</code>.<br>
+          El destino es interno; el usuario no lo ve hasta la revelación.</p>
+          <div class="fields">
+            <div class="field"><label>destino *</label><input id="viaje-destino" value="Roma"></div>
+            <div class="field"><label>presupuesto (€)</label><input id="viaje-presupuesto" type="number" value="800"></div>
+            <div class="field"><label>fechaInicio</label><input id="viaje-fecha" value="2026-06-15"></div>
+            <div class="field"><label>duracion (días)</label><input id="viaje-duracion" type="number" value="7"></div>
+          </div>
+          <div class="fields">
+            <div class="field field-full">
+              <label>campos extra (JSON opcional)</label>
+              <textarea id="viaje-extra" placeholder='{"categoria": "cultural"}'></textarea>
+            </div>
+          </div>
+          <button class="send-btn" data-action="viajes-create">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Revelar destino -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/viajes/:id/revelar</span>
+          <span class="card-desc">Revelar el destino sorpresa</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Cambia el estado del viaje a «revelado» y devuelve el destino real.<br>
+          Body vacío <code>{}</code>. Requiere que pasen las 48 h configuradas o que se fuerce manualmente.</p>
+          <div class="fields">
+            <div class="field"><label>id *</label><input id="viaje-id-revelar" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="viajes-revelar">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ RESERVAS ════════ -->
+    <div class="section" id="section-reservas">
+      <div class="section-title">Reservas <span class="lock">🔒 requiere token</span></div>
+
+      <!-- Listar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/reservas</span>
+          <span class="card-desc">Listar reservas del usuario</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Devuelve <code>{ items: [], message }</code> con todas las reservas activas del usuario.</p>
+          <button class="send-btn" data-action="reservas-list">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Crear -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/reservas</span>
+          <span class="card-desc">Crear reserva ligada a un viaje</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Body: <code>{ viajeId, hotel, noches, tipo?, precio? }</code>.<br>
+          El viaje debe pertenecer al usuario autenticado.</p>
+          <div class="fields">
+            <div class="field field-full">
+              <label>body (JSON)</label>
+              <textarea id="reserva-body">{
+  "viajeId": 1,
+  "hotel": "Hotel Ritz Madrid",
+  "noches": 5,
+  "tipo": "hotel",
+  "precio": 350
+}</textarea>
+            </div>
+          </div>
+          <button class="send-btn" data-action="reservas-create">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Cancelar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/reservas/:id/cancelar</span>
+          <span class="card-desc">Cancelar una reserva</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Cambia el estado de la reserva a «cancelada». Body vacío <code>{}</code>.<br>
+          404 si la reserva no existe o no pertenece al usuario.</p>
+          <div class="fields">
+            <div class="field"><label>id *</label><input id="reserva-id" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="reservas-cancelar">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ ITINERARIOS ════════ -->
+    <div class="section" id="section-itinerarios">
+      <div class="section-title">Itinerarios <span class="lock">🔒 requiere token</span></div>
+
+      <!-- Obtener -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/itinerarios/viaje/:viajeId</span>
+          <span class="card-desc">Obtener itinerario de un viaje</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Devuelve el itinerario generado (días, actividades, horarios).<br>
+          404 si el viaje no tiene itinerario o no pertenece al usuario.</p>
+          <div class="fields">
+            <div class="field"><label>viajeId *</label><input id="itin-viaje-id" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="itin-get">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Regenerar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/itinerarios/viaje/:viajeId/regenerar</span>
+          <span class="card-desc">Regenerar itinerario con IA</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Descarta el itinerario actual y genera uno nuevo con Gemini AI.<br>
+          Body vacío <code>{}</code>. Puede tardar varios segundos.</p>
+          <div class="fields">
+            <div class="field"><label>viajeId *</label><input id="itin-viaje-id-regen" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="itin-regen">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ PERFIL ════════ -->
+    <div class="section" id="section-perfil">
+      <div class="section-title">Perfil <span class="lock">🔒 requiere token</span></div>
+
+      <!-- Obtener -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/perfil/me</span>
+          <span class="card-desc">Obtener perfil del usuario autenticado</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Lee el usuario directamente del JWT. No consulta la BD.<br>
+          Devuelve <code>{ usuario: { id, email, nombre }, message }</code>.</p>
+          <button class="send-btn" data-action="perfil-get">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Actualizar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method PUT">PUT</span>
+          <span class="card-url">/api/perfil/me</span>
+          <span class="card-desc">Actualizar datos del perfil</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Body: <code>{ nombre?, apellidos?, telefono?, idioma? }</code>. Solo se actualizan los campos enviados.<br>
+          Devuelve <code>{ message, cambios }</code> con lo que se ha guardado.</p>
+          <div class="fields">
+            <div class="field"><label>nombre</label><input id="perfil-nombre" value="Alicia"></div>
+            <div class="field"><label>apellidos</label><input id="perfil-apellidos" value="Maillo González"></div>
+            <div class="field"><label>telefono</label><input id="perfil-telefono" value="+34 611223344"></div>
+            <div class="field"><label>idioma</label><input id="perfil-idioma" value="es"></div>
+          </div>
+          <div class="fields">
+            <div class="field field-full">
+              <label>campos extra (JSON opcional)</label>
+              <textarea id="perfil-extra" placeholder='{"preferencias": {"notificaciones": true}}'></textarea>
+            </div>
+          </div>
+          <button class="send-btn" data-action="perfil-update">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ NOTIFICACIONES ════════ -->
+    <div class="section" id="section-notificaciones">
+      <div class="section-title">Notificaciones <span class="lock">🔒 requiere token</span></div>
+
+      <!-- Listar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/notificaciones</span>
+          <span class="card-desc">Listar notificaciones (paginado)</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Query params: <code>pagina</code> (def. 1), <code>limite</code> (def. 20, max 50), <code>solo_no_leidas</code> (true/false).<br>
+          Devuelve <code>{ items, total, pagina, paginas }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>pagina</label><input id="notif-pagina" type="number" value="1"></div>
+            <div class="field"><label>limite</label><input id="notif-limite" type="number" value="20"></div>
+            <div class="field field-check">
+              <input type="checkbox" id="notif-solo-no-leidas">
+              <label for="notif-solo-no-leidas">solo no leídas</label>
+            </div>
+          </div>
+          <button class="send-btn" data-action="notif-list">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Marcar todas leídas -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/notificaciones/leer-todas</span>
+          <span class="card-desc">Marcar todas las notificaciones como leídas</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Body vacío <code>{}</code>. Devuelve <code>{ message: "N notificaciones marcadas como leídas" }</code>.</p>
+          <button class="send-btn" data-action="notif-leer-todas">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Marcar una leída -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/notificaciones/:id/leer</span>
+          <span class="card-desc">Marcar una notificación como leída</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Body vacío <code>{}</code>. 404 si la notificación no existe o no pertenece al usuario.</p>
+          <div class="fields">
+            <div class="field"><label>id *</label><input id="notif-id-leer" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="notif-leer">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- Eliminar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="method DELETE">DELETE</span>
+          <span class="card-url">/api/notificaciones/:id</span>
+          <span class="card-desc">Eliminar una notificación</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Elimina permanentemente la notificación. 404 si no existe o no pertenece al usuario.</p>
+          <div class="fields">
+            <div class="field"><label>id *</label><input id="notif-id-delete" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="notif-delete">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ LOG ════════ -->
+    <div class="section" id="section-log">
+      <div class="section-title">Historial de llamadas</div>
+      <div id="log-entries"><p class="empty-log">Todavía no hay llamadas registradas.</p></div>
+    </div>
+
+  </div><!-- /sections -->
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
