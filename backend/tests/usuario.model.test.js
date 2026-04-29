@@ -1,3 +1,106 @@
+// Cada vez que jest.resetModules() limpia la caché y se re-requiere el módulo,
+// la factory se ejecuta de nuevo con un store vacío → estado aislado por test.
+jest.mock('../src/models/usuario.model', () => {
+  let store = [];
+  let nextId = 1;
+
+  const buscarPorEmail = (email) =>
+    Promise.resolve(store.find((u) => u.email === email) ?? null);
+
+  const buscarPorId = (id) =>
+    Promise.resolve(store.find((u) => u.id === id) ?? null);
+
+  const crear = ({ nombre, apellidos, email, passwordHash, tokenVerificacion }) => {
+    const user = {
+      id: nextId++,
+      nombre,
+      apellidos: apellidos ?? null,
+      email,
+      password_hash: passwordHash,
+      email_verificado: false,
+      token_verificacion: tokenVerificacion ?? null,
+      tokenVerificacion: tokenVerificacion ?? null,
+      refresh_token: null,
+      reset_token: null,
+      reset_expiracion: null,
+    };
+    store.push(user);
+    return Promise.resolve(user);
+  };
+
+  const guardarRefreshToken = (usuarioId, refreshToken) => {
+    const u = store.find((u) => u.id === usuarioId);
+    if (u) u.refresh_token = refreshToken;
+    return Promise.resolve();
+  };
+
+  const eliminarRefreshToken = (refreshToken) => {
+    const u = store.find((u) => u.refresh_token === refreshToken);
+    if (u) u.refresh_token = null;
+    return Promise.resolve();
+  };
+
+  const buscarPorTokenVerificacion = (token) =>
+    Promise.resolve(store.find((u) => u.token_verificacion === token) ?? null);
+
+  const verificarEmail = (usuarioId) => {
+    const u = store.find((u) => u.id === usuarioId);
+    if (u) {
+      u.email_verificado = true;
+      u.token_verificacion = null;
+      u.tokenVerificacion = null;
+    }
+    return Promise.resolve();
+  };
+
+  const guardarTokenReset = (usuarioId, tokenReset, expiracion) => {
+    const u = store.find((u) => u.id === usuarioId);
+    if (u) {
+      u.reset_token = tokenReset;
+      u.reset_expiracion = expiracion;
+    }
+    return Promise.resolve();
+  };
+
+  const buscarPorTokenReset = (token) => {
+    const u = store.find(
+      (u) => u.reset_token === token && u.reset_expiracion > new Date()
+    );
+    return Promise.resolve(u ?? null);
+  };
+
+  const actualizarPassword = (usuarioId, passwordHash) => {
+    const u = store.find((u) => u.id === usuarioId);
+    if (u) {
+      u.password_hash = passwordHash;
+      u.reset_token = null;
+      u.reset_expiracion = null;
+    }
+    return Promise.resolve();
+  };
+
+  const verificarRefreshToken = (usuarioId, refreshToken) => {
+    const u = store.find(
+      (u) => u.id === usuarioId && u.refresh_token === refreshToken
+    );
+    return Promise.resolve(Boolean(u));
+  };
+
+  return {
+    buscarPorEmail,
+    buscarPorId,
+    crear,
+    guardarRefreshToken,
+    eliminarRefreshToken,
+    buscarPorTokenVerificacion,
+    verificarEmail,
+    guardarTokenReset,
+    buscarPorTokenReset,
+    actualizarPassword,
+    verificarRefreshToken,
+  };
+});
+
 describe('UsuarioModel', () => {
   let UsuarioModel;
 

@@ -1,3 +1,10 @@
+jest.mock('../src/controllers/viajes.controller', () => ({
+  listarViajes:      (req, res) => res.json({ items: [], total: 0 }),
+  obtenerViajePorId: (req, res) => res.json({ id: Number(req.params.id) }),
+  crearViaje:        (req, res) => res.status(201).json({ message: 'Ruta para crear viaje preparada.', payload: req.body }),
+  revelarDestino:    (req, res) => res.json({ message: `Destino revelado ${req.params.id}` }),
+}));
+
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const createApp = require('../src/create-app');

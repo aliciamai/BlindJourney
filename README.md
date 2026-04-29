@@ -21,10 +21,10 @@ BlindJourney/
 │   │   ├── app.js         # Punto de entrada del servidor
 │   │   ├── create-app.js  # Factory sin listen() (para tests)
 │   │   ├── config/        # Conexión Sequelize
-│   │   ├── models/        # 11 modelos Sequelize
-│   │   ├── controllers/   # 7 controladores
-│   │   ├── services/      # Gemini, Stripe, Email, Revelación
-│   │   ├── routes/        # 6 grupos de rutas
+│   │   ├── models/        # Modelos Sequelize
+│   │   ├── controllers/   # Controladores
+│   │   ├── services/      # Gemini, Stripe, Email, Revelación, Normalización
+│   │   ├── routes/        # Grupos de rutas
 │   │   ├── middlewares/   # JWT auth + validación de inputs
 │   │   └── public/        # HTML tester manual de la API
 │   ├── tests/             # Tests Jest + Supertest
@@ -69,28 +69,90 @@ BlindJourney/
 
 ## Endpoints
 
+### Autenticación
+
 | Método | Ruta | Auth | Descripción |
 |--------|------|:----:|-------------|
 | POST | /api/auth/registro | No | Crear cuenta |
 | POST | /api/auth/login | No | Iniciar sesión (devuelve JWT) |
 | POST | /api/auth/logout | Sí | Revocar refresh token |
 | GET | /api/auth/verificar/:token | No | Verificar email |
-| POST | /api/auth/recuperar-password | No | Solicitar reset |
+| POST | /api/auth/recuperar-password | No | Solicitar reset de contraseña |
 | POST | /api/auth/nueva-password | No | Establecer nueva contraseña |
 | POST | /api/auth/refresh | No | Renovar JWT con refresh token |
+
+### Viajes
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
 | GET | /api/viajes | Sí | Listar viajes del usuario |
 | POST | /api/viajes | Sí | Crear viaje + generar candidatos IA |
 | GET | /api/viajes/:id | Sí | Obtener viaje con candidatos |
 | PATCH | /api/viajes/:id/revelar | Sí | Revelar destino manualmente |
-| POST | /api/viajes/:id/candidatos/:cId/vetar | Sí | Vetar candidato |
+| POST | /api/viajes/:id/candidatos/:cId/vetar | Sí | Vetar candidato de destino |
+
+### Reservas
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
 | GET | /api/reservas | Sí | Listar reservas del usuario |
 | POST | /api/reservas | Sí | Crear reserva + PaymentIntent Stripe |
 | PATCH | /api/reservas/:id/cancelar | Sí | Cancelar reserva |
 | POST | /api/reservas/webhook | No | Webhook de Stripe (raw body) |
+
+### Itinerarios
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
 | GET | /api/itinerarios/viaje/:id | Sí | Obtener itinerario de un viaje |
 | POST | /api/itinerarios/viaje/:id/regenerar | Sí | Regenerar itinerario con IA |
+
+### Perfil
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
 | GET | /api/perfil/me | Sí | Obtener perfil del usuario autenticado |
 | PUT | /api/perfil/me | Sí | Actualizar preferencias del perfil |
+
+### Álbum de fotos
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
+| GET | /api/fotos/viaje/:id | Sí | Listar fotos del álbum de un viaje |
+| POST | /api/fotos/viaje/:id | Sí | Subir foto al álbum |
+| DELETE | /api/fotos/:id | Sí | Eliminar foto |
+
+### Documentos
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
+| GET | /api/documentos | Sí | Listar todos los documentos del usuario |
+| GET | /api/documentos/viaje/:id | Sí | Listar documentos de un viaje |
+| POST | /api/documentos | Sí | Crear documento |
+| PUT | /api/documentos/:id | Sí | Actualizar documento |
+| DELETE | /api/documentos/:id | Sí | Eliminar documento |
+
+### Buscador (afiliados)
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
+| GET | /api/buscador/links | Sí | Obtener links de vuelos y hoteles (afiliados) |
+| POST | /api/buscador/registrar | Sí | Registrar clic de afiliado |
+| GET | /api/buscador/estadisticas | Sí | Ver estadísticas de comisiones |
+
+### Notificaciones
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
+| GET | /api/notificaciones | Sí | Listar notificaciones del usuario |
+| PATCH | /api/notificaciones/leer-todas | Sí | Marcar todas como leídas |
+| PATCH | /api/notificaciones/:id/leer | Sí | Marcar una notificación como leída |
+| DELETE | /api/notificaciones/:id | Sí | Eliminar notificación |
+
+### Sistema
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
 | GET | /health | No | Health check del servidor |
 
 ---
@@ -167,14 +229,18 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 GEMINI_API_KEY=...
+GROQ_API_KEY=...          # fallback gratuito si Gemini falla
 
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=tu_email@gmail.com
-EMAIL_PASSWORD=tu_app_password
+EMAIL_PASS=tu_app_password
+EMAIL_FROM="BlindJourney" <noreply@blindjourney.com>
 
 FRONTEND_URL=http://localhost:3000
 ```
+
+Consulta `backend/.env.example` para el detalle completo y cómo obtener cada clave.
 
 ---
 
@@ -182,6 +248,6 @@ FRONTEND_URL=http://localhost:3000
 
 - **JWT stateless + refresh token en BD**: el refresh token se persiste para poder revocarlo en logout; el JWT de acceso (24h) no se almacena.
 - **Destino protegido**: `destino_ciudad` y `destino_pais` no se exponen en ninguna respuesta hasta que `destino_revelado = true`.
-- **Graceful degradation en IA**: si Gemini falla (sin API key, cuota agotada), el viaje se crea igualmente sin candidatos.
+- **Graceful degradation en IA**: si Gemini falla (sin API key, cuota agotada), el sistema intenta Groq como fallback; si ambos fallan, el viaje se crea igualmente sin candidatos.
 - **Timer en proceso**: el servicio de revelación usa `setInterval` cada 60s dentro del proceso principal; en producción se podría migrar a un job externo (cron, AWS Lambda).
 - **Separación app / server**: `create-app.js` monta las rutas sin arrancar el servidor, lo que permite testear con Supertest sin efectos secundarios.

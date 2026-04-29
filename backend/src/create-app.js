@@ -6,11 +6,15 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-const authRoutes = require('./routes/auth.routes');
-const viajesRoutes = require('./routes/viajes.routes');
-const reservasRoutes = require('./routes/reservas.routes');
-const itinerariosRoutes = require('./routes/itinerarios.routes');
-const perfilRoutes = require('./routes/perfil.routes');
+const authRoutes           = require('./routes/auth.routes');
+const viajesRoutes         = require('./routes/viajes.routes');
+const reservasRoutes       = require('./routes/reservas.routes');
+const itinerariosRoutes    = require('./routes/itinerarios.routes');
+const perfilRoutes         = require('./routes/perfil.routes');
+const notificacionesRoutes = require('./routes/notificaciones.routes');
+const documentosRoutes     = require('./routes/documentos.routes');
+const fotosRoutes          = require('./routes/fotos.routes');
+const buscadorRoutes       = require('./routes/buscador.routes');
 
 const createApp = () => {
   const app = express();
@@ -34,6 +38,10 @@ const createApp = () => {
   app.use('/api/reservas', reservasRoutes);
   app.use('/api/itinerarios', itinerariosRoutes);
   app.use('/api/perfil', perfilRoutes);
+  app.use('/api/notificaciones', notificacionesRoutes);
+  app.use('/api/documentos', documentosRoutes);
+  app.use('/api/fotos', fotosRoutes);
+  app.use('/api/buscador', buscadorRoutes);
 
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

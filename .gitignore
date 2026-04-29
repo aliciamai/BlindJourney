@@ -42,11 +42,10 @@ build/
 .next/
 out/
 
-# ── Frontend (React) ───────────────────────────────────────
-frontend/node_modules/
-frontend/.env
-frontend/build/
-frontend/dist/
+# ── Certificados y claves privadas ────────────────────────
+*.pem
+*.key
+*.cert
 
 # ── Uploads temporales ────────────────────────────────────
 uploads/

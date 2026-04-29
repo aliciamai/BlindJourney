@@ -1,3 +1,10 @@
+jest.mock('../src/controllers/itinerarios.controller', () => ({
+  obtenerItinerarioDeViaje: (req, res) => res.json({ viajeId: Number(req.params.viajeId), dias: [] }),
+  regenerarItinerario:      (req, res) => res.json({ viajeId: Number(req.params.viajeId) }),
+  actualizarActividad:      (req, res) => res.json({ id: Number(req.params.actividadId), ...req.body }),
+  eliminarActividad:        (req, res) => res.json({ id: Number(req.params.actividadId) }),
+}));
+
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const createApp = require('../src/create-app');

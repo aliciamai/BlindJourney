@@ -28,6 +28,8 @@ feat: añadir filtro de destinos por presupuesto
 fix: corregir validación de email en registro
 refactor: extraer lógica de pago a stripe.service
 test: añadir test de cancelación de reserva
+docs: actualizar tabla de endpoints en README
+chore: actualizar dependencias
 ```
 
 Tipos válidos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.

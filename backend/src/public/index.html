@@ -108,6 +108,15 @@
     .log-url  { font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .log-entry pre.json { border-radius: 0; border: none; border-top: 1px solid var(--border); }
     .empty-log { color: var(--text2); text-align: center; padding: 40px; }
+
+    /* ── Errores ── */
+    .section-subtitle { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .08em; text-transform: uppercase; margin: 22px 0 10px; border-left: 3px solid var(--border); padding-left: 10px; }
+    .expect-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; margin-left: auto; }
+    .exp-400 { background: #f59e0b20; color: var(--yellow); }
+    .exp-401 { background: #ef444420; color: var(--red); }
+    .exp-403 { background: #ef444420; color: var(--red); }
+    .exp-404 { background: #ef444430; color: var(--red); }
+    .exp-409 { background: #8b5cf620; color: var(--purple); }
   </style>
 </head>
 <body>
@@ -124,6 +133,8 @@
   <button data-nav="itinerarios">🗓️ Itinerarios</button>
   <button data-nav="perfil">👤 Perfil</button>
   <button data-nav="notificaciones">🔔 Notificaciones</button>
+  <div class="nav-sep"></div>
+  <button data-nav="errores">🚨 Errores</button>
   <div class="nav-sep"></div>
   <button data-nav="log">📜 Log</button>
 </nav>
@@ -604,6 +615,467 @@
           <div class="response"></div>
         </div>
       </div>
+    </div>
+
+    <!-- ════════ ERRORES ════════ -->
+    <div class="section" id="section-errores">
+      <div class="section-title">Casos de Error <span style="font-size:13px;font-weight:400;color:var(--text2)">— peticiones preconfiguradas para provocar cada respuesta de error del backend</span></div>
+
+      <!-- ── JWT / Autorización ── -->
+      <div class="section-subtitle">🔑 JWT / Autorización</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes</span>
+          <span class="card-desc">Sin Authorization header</span>
+          <span class="expect-badge exp-401">→ 401 NO_TOKEN</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía la petición <strong>sin token</strong>. El middleware JWT responde con <code>{ error: "Acceso no autorizado. Token requerido.", code: "NO_TOKEN" }</code>.</p>
+          <button class="send-btn" data-action="err-no-token">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes</span>
+          <span class="card-desc">Token con firma inválida / manipulado</span>
+          <span class="expect-badge exp-401">→ 401 INVALID_TOKEN</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>Authorization: Bearer token.invalido.firma_falsa</code>. El middleware responde con <code>{ error: "Token invalido.", code: "INVALID_TOKEN" }</code>.</p>
+          <button class="send-btn" data-action="err-token-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes</span>
+          <span class="card-desc">Token expirado (pega uno antiguo)</span>
+          <span class="expect-badge exp-401">→ 401 TOKEN_EXPIRED</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Necesitas un JWT real de una sesión anterior ya caducada (los tokens duran 1 h). Pégalo aquí — no modifica el token activo de la barra superior.<br>
+          Respuesta esperada: <code>{ error: "Token expirado. Por favor, renueva tu sesion.", code: "TOKEN_EXPIRED" }</code>.</p>
+          <div class="fields">
+            <div class="field field-full"><label>JWT expirado *</label><input id="err-token-exp" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
+          </div>
+          <button class="send-btn" data-action="err-token-expirado">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- ── Auth — Validaciones 400 ── -->
+      <div class="section-subtitle">📋 Auth — Validaciones (400)</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/registro</span>
+          <span class="card-desc">Cuerpo vacío — todos los campos ausentes</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>{}</code>. El validador rechaza con los errores: nombre, apellidos, email y password requeridos.</p>
+          <button class="send-btn" data-action="err-reg-vacio">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/registro</span>
+          <span class="card-desc">Email con formato inválido</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>email: "no-es-un-email"</code>. Respuesta: <code>{ error: "Datos de entrada no validos", detalles: [{ campo: "email", mensaje: "Debes indicar un email valido" }] }</code>.</p>
+          <button class="send-btn" data-action="err-reg-email-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/registro</span>
+          <span class="card-desc">Password demasiado corta (menos de 8 chars)</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>password: "abc"</code>. Respuesta: <code>{ error: "Datos de entrada no validos", detalles: [{ campo: "password", mensaje: "La password debe tener al menos 8 caracteres" }] }</code>.</p>
+          <button class="send-btn" data-action="err-reg-pass-corta">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/login</span>
+          <span class="card-desc">Email con formato inválido</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>email: "no-es-email"</code>. El validador rechaza antes de consultar la BD.</p>
+          <button class="send-btn" data-action="err-login-email-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/login</span>
+          <span class="card-desc">Sin campo password</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía solo <code>{ email: "test@example.com" }</code>. El validador rechaza por password ausente.</p>
+          <button class="send-btn" data-action="err-login-sin-password">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/auth/verificar/:token</span>
+          <span class="card-desc">Token de verificación inválido o ya usado</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Usa un token hex de 64 chars inventado. Respuesta: <code>{ error: "Token de verificación inválido o ya utilizado" }</code>.</p>
+          <button class="send-btn" data-action="err-verif-token-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/nueva-password</span>
+          <span class="card-desc">Token de reset inválido o expirado</span>
+          <span class="expect-badge exp-400">→ 400</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía un token de reset falso. Respuesta: <code>{ error: "Token inválido o expirado. Solicita un nuevo enlace." }</code>.</p>
+          <button class="send-btn" data-action="err-nueva-pass-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- ── Auth — Credenciales 401 / 403 ── -->
+      <div class="section-subtitle">🚫 Auth — Credenciales (401 / 403)</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/login</span>
+          <span class="card-desc">Credenciales incorrectas (usuario inexistente)</span>
+          <span class="expect-badge exp-401">→ 401</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Email que no existe en la BD. Respuesta: <code>{ error: "Credenciales incorrectas" }</code>. El backend usa el mismo mensaje para email inexistente y password errónea (anti-enumeración).</p>
+          <button class="send-btn" data-action="err-login-credenciales">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/login</span>
+          <span class="card-desc">Email registrado pero sin verificar</span>
+          <span class="expect-badge exp-403">→ 403 EMAIL_NOT_VERIFIED</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Registra un usuario pero <strong>no hagas clic en el link del email</strong>, luego intenta hacer login. Respuesta: <code>{ error: "Debes verificar tu email antes de iniciar sesión", code: "EMAIL_NOT_VERIFIED" }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>email (cuenta sin verificar)</label><input id="err-email-no-verif" type="email" placeholder="nuevo@example.com"></div>
+            <div class="field"><label>password</label><input id="err-pass-no-verif" type="password" placeholder="Password123!"></div>
+          </div>
+          <button class="send-btn" data-action="err-login-no-verificado">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- ── Auth — Refresh 401 ── -->
+      <div class="section-subtitle">🔄 Auth — Refresh Token (401)</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/refresh</span>
+          <span class="card-desc">Sin refresh token en el body</span>
+          <span class="expect-badge exp-401">→ 401</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía <code>{}</code>. Respuesta: <code>{ error: "Refresh token requerido" }</code>.</p>
+          <button class="send-btn" data-action="err-refresh-sin-token">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/refresh</span>
+          <span class="card-desc">Refresh token con firma inválida</span>
+          <span class="expect-badge exp-401">→ 401</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Envía un refresh token con estructura JWT pero firma incorrecta. Respuesta: <code>{ error: "Refresh token inválido" }</code>.</p>
+          <button class="send-btn" data-action="err-refresh-invalido">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/refresh</span>
+          <span class="card-desc">Refresh token válido pero ya revocado (sesión cerrada)</span>
+          <span class="expect-badge exp-401">→ 401</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Haz login, copia el refresh token, haz logout y pégalo aquí. Respuesta: <code>{ error: "Refresh token revocado" }</code>.</p>
+          <div class="fields">
+            <div class="field field-full"><label>refreshToken revocado *</label><input id="err-refresh-revocado-tok" placeholder="(pega el refresh token de una sesión ya cerrada)"></div>
+          </div>
+          <button class="send-btn" data-action="err-refresh-revocado">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- ── Conflictos 409 ── -->
+      <div class="section-subtitle">⚠️ Conflictos de Estado (409)</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/auth/registro</span>
+          <span class="card-desc">Email ya registrado</span>
+          <span class="expect-badge exp-409">→ 409</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta registrar un email que ya existe en la BD. Respuesta: <code>{ error: "Este email ya está registrado" }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>email ya existente *</label><input id="err-email-existe" type="email" value="alicia@example.com"></div>
+            <div class="field"><label>nombre</label><input id="err-nombre-existe" value="Test"></div>
+          </div>
+          <button class="send-btn" data-action="err-reg-email-existe">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/viajes/:id/revelar</span>
+          <span class="card-desc">Destino ya revelado anteriormente</span>
+          <span class="expect-badge exp-409">→ 409</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta revelar un viaje cuyo destino ya está revelado. Respuesta: <code>{ error: "El destino ya fue revelado" }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>id del viaje (ya revelado) *</label><input id="err-viaje-revelado-id" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="err-viaje-ya-revelado">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/reservas/:id/cancelar</span>
+          <span class="card-desc">Reserva ya cancelada anteriormente</span>
+          <span class="expect-badge exp-409">→ 409</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta cancelar una reserva que ya está cancelada. Respuesta: <code>{ error: "La reserva ya está cancelada" }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>id de la reserva (ya cancelada) *</label><input id="err-reserva-cancelada-id" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="err-reserva-ya-cancelada">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/itinerarios/viaje/:viajeId/regenerar</span>
+          <span class="card-desc">Destino no revelado aún — no se puede regenerar</span>
+          <span class="expect-badge exp-409">→ 409</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Regenerar el itinerario requiere que el destino esté revelado. Respuesta: <code>{ error: "El destino aún no ha sido revelado" }</code>.</p>
+          <div class="fields">
+            <div class="field"><label>viajeId (destino sin revelar) *</label><input id="err-viaje-no-revelado-id" value="1"></div>
+          </div>
+          <button class="send-btn" data-action="err-itin-regen-no-revelado">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <!-- ── 404 No encontrado ── -->
+      <div class="section-subtitle">🔍 Recursos No Encontrados (404)</div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/viajes/99999</span>
+          <span class="card-desc">Viaje inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Pide el viaje con ID 99999 (no existe o no es tuyo). Respuesta: <code>{ error: "Viaje no encontrado" }</code>.</p>
+          <button class="send-btn" data-action="err-viaje-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method POST">POST</span>
+          <span class="card-url">/api/reservas</span>
+          <span class="card-desc">Crear reserva con viajeId inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta crear una reserva ligada al viaje 99999. Respuesta: <code>{ error: "Viaje no encontrado" }</code>.</p>
+          <button class="send-btn" data-action="err-reservas-viaje-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/reservas/99999/cancelar</span>
+          <span class="card-desc">Reserva inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta cancelar la reserva 99999. Respuesta: <code>{ error: "Reserva no encontrada" }</code>.</p>
+          <button class="send-btn" data-action="err-reservas-cancelar-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/itinerarios/viaje/:viajeId</span>
+          <span class="card-desc">Viaje inexistente o sin itinerario generado</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Con ID 99999 → <code>{ error: "Viaje no encontrado" }</code>. Con un viaje real sin itinerario → <code>{ error: "Este viaje aún no tiene itinerario generado" }</code>. Cambia el ID para probar el segundo caso.</p>
+          <div class="fields">
+            <div class="field"><label>viajeId *</label><input id="err-viaje-sin-itin" value="99999"></div>
+          </div>
+          <button class="send-btn" data-action="err-itin-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method PATCH">PATCH</span>
+          <span class="card-url">/api/notificaciones/99999/leer</span>
+          <span class="card-desc">Notificación inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta marcar como leída la notificación 99999. Respuesta: <code>{ error: "Notificación no encontrada" }</code>.</p>
+          <button class="send-btn" data-action="err-notif-leer-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method DELETE">DELETE</span>
+          <span class="card-url">/api/notificaciones/99999</span>
+          <span class="card-desc">Notificación inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta eliminar la notificación 99999. Respuesta: <code>{ error: "Notificación no encontrada" }</code>.</p>
+          <button class="send-btn" data-action="err-notif-delete-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/documentos/viaje/99999</span>
+          <span class="card-desc">Documentos de viaje inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Pide los documentos del viaje 99999 (no existe o no es tuyo). Respuesta: <code>{ error: "Viaje no encontrado" }</code>.</p>
+          <button class="send-btn" data-action="err-doc-viaje-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method PUT">PUT</span>
+          <span class="card-url">/api/documentos/99999</span>
+          <span class="card-desc">Actualizar documento inexistente</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta actualizar el documento 99999 (no existe, está inactivo o no es tuyo). Respuesta: <code>{ error: "Documento no encontrado" }</code>.</p>
+          <button class="send-btn" data-action="err-doc-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method DELETE">DELETE</span>
+          <span class="card-url">/api/documentos/99999</span>
+          <span class="card-desc">Eliminar documento inexistente (soft delete)</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Intenta eliminar (soft delete) el documento 99999. Respuesta: <code>{ error: "Documento no encontrado" }</code>.</p>
+          <button class="send-btn" data-action="err-doc-delete-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="method GET">GET</span>
+          <span class="card-url">/api/perfil/me</span>
+          <span class="card-desc">Usuario del JWT no encontrado en BD (cuenta eliminada)</span>
+          <span class="expect-badge exp-404">→ 404</span>
+        </div>
+        <div class="card-body">
+          <p class="doc">Caso extremo: el JWT es válido pero el usuario fue eliminado de la BD. Usa un JWT de un usuario ya borrado. No modifica el token activo de la barra.<br>
+          Respuesta: <code>{ error: "Usuario no encontrado" }</code>.</p>
+          <div class="fields">
+            <div class="field field-full"><label>JWT de usuario eliminado *</label><input id="err-perfil-jwt-eliminado" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
+          </div>
+          <button class="send-btn" data-action="err-perfil-404">Enviar</button>
+          <div class="response"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ════════ LOG ════════ -->

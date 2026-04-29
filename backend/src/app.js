@@ -33,6 +33,9 @@ const reservasRoutes        = require('./routes/reservas.routes');
 const itinerariosRoutes     = require('./routes/itinerarios.routes');
 const perfilRoutes          = require('./routes/perfil.routes');
 const notificacionesRoutes  = require('./routes/notificaciones.routes');
+const documentosRoutes      = require('./routes/documentos.routes');
+const fotosRoutes           = require('./routes/fotos.routes');
+const buscadorRoutes        = require('./routes/buscador.routes');
 
 // Importamos el servicio que comprueba cada minuto si hay viajes
 // cuyo destino debe revelarse (timer automático de 48h)
@@ -86,6 +89,9 @@ app.use('/api/reservas',        reservasRoutes);
 app.use('/api/itinerarios',     itinerariosRoutes);
 app.use('/api/perfil',          perfilRoutes);
 app.use('/api/notificaciones',  notificacionesRoutes);
+app.use('/api/documentos',      documentosRoutes);
+app.use('/api/fotos',           fotosRoutes);
+app.use('/api/buscador',        buscadorRoutes);
 
 // Ruta de health check: permite saber si el servidor está vivo
 // Útil para herramientas de monitorización como AWS ELB

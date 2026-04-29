@@ -1,3 +1,9 @@
+jest.mock('../src/controllers/reservas.controller', () => ({
+  listarReservas: (req, res) => res.json({ items: [], total: 0 }),
+  crearReserva:   (req, res) => res.status(201).json({ payload: req.body }),
+  cancelarReserva:(req, res) => res.json({ message: `Reserva ${req.params.id} cancelada` }),
+}));
+
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const createApp = require('../src/create-app');

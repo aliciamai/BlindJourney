@@ -42,13 +42,7 @@ const regenerarItinerario = async (req, res, next) => {
       return res.status(409).json({ error: 'El destino aún no ha sido revelado' });
     }
 
-    // Borrar itinerario anterior si existe
-    const anterior = await Itinerario.findOne({ where: { viaje_id: viaje.id } });
-    if (anterior) {
-      await Actividad.destroy({ where: { itinerario_id: anterior.id } });
-      await anterior.destroy();
-    }
-
+    // 1. Llamar a Gemini ANTES de tocar la BD
     const perfil = await Perfil.findOne({ where: { usuario_id: req.usuario.id } });
     const dias = await geminiService.generarItinerario({
       ciudad:                    viaje.destino_ciudad,
@@ -62,10 +56,18 @@ const regenerarItinerario = async (req, res, next) => {
       restriccionesAlimentarias: perfil?.restricciones_alimentarias || [],
     });
 
+    // 2. Gemini respondió OK — ahora sí borramos el itinerario anterior
+    const anterior = await Itinerario.findOne({ where: { viaje_id: viaje.id } });
+    if (anterior) {
+      await Actividad.destroy({ where: { itinerario_id: anterior.id } });
+      await anterior.destroy();
+    }
+
+    // 3. Persistir el nuevo itinerario
     const itinerario = await Itinerario.create({
-      viaje_id:       viaje.id,
-      destino_ciudad: viaje.destino_ciudad,
-      destino_pais:   viaje.destino_pais,
+      viaje_id:        viaje.id,
+      destino_ciudad:  viaje.destino_ciudad,
+      destino_pais:    viaje.destino_pais,
       generado_por_ia: true,
     });
 
@@ -87,11 +89,7 @@ const regenerarItinerario = async (req, res, next) => {
 
     const completo = await Itinerario.findOne({
       where:   { id: itinerario.id },
-      include: [{
-        model: Actividad,
-        as:    'actividades',
-        order: [['dia', 'ASC'], ['hora', 'ASC']],
-      }],
+      include: [{ model: Actividad, as: 'actividades' }],
     });
 
     res.json({ message: 'Itinerario generado correctamente', itinerario: completo });
@@ -100,4 +98,62 @@ const regenerarItinerario = async (req, res, next) => {
   }
 };
 
-module.exports = { obtenerItinerarioDeViaje, regenerarItinerario };
+// ── PATCH /api/itinerarios/actividades/:actividadId ──────────
+// Marca una actividad como importante o completada (swipe iOS)
+const actualizarActividad = async (req, res, next) => {
+  try {
+    const { actividadId } = req.params;
+    const { importante, completada } = req.body;
+
+    const actividad = await Actividad.findByPk(actividadId);
+    if (!actividad) return res.status(404).json({ error: 'Actividad no encontrada' });
+
+    // Verificar que el itinerario pertenece al usuario
+    const itinerario = await Itinerario.findOne({
+      where: { id: actividad.itinerario_id },
+    });
+    const viaje = await Viaje.findOne({
+      where: { id: itinerario?.viaje_id, usuario_id: req.usuario.id },
+    });
+    if (!viaje) return res.status(403).json({ error: 'Sin permisos sobre esta actividad' });
+
+    const campos = {};
+    if (importante !== undefined) campos.importante = Boolean(importante);
+    if (completada  !== undefined) campos.completada  = Boolean(completada);
+
+    await actividad.update(campos);
+    res.json({ message: 'Actividad actualizada', actividad });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── DELETE /api/itinerarios/actividades/:actividadId ─────────
+const eliminarActividad = async (req, res, next) => {
+  try {
+    const { actividadId } = req.params;
+
+    const actividad = await Actividad.findByPk(actividadId);
+    if (!actividad) return res.status(404).json({ error: 'Actividad no encontrada' });
+
+    const itinerario = await Itinerario.findOne({
+      where: { id: actividad.itinerario_id },
+    });
+    const viaje = await Viaje.findOne({
+      where: { id: itinerario?.viaje_id, usuario_id: req.usuario.id },
+    });
+    if (!viaje) return res.status(403).json({ error: 'Sin permisos sobre esta actividad' });
+
+    await actividad.destroy();
+    res.json({ message: 'Actividad eliminada' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  obtenerItinerarioDeViaje,
+  regenerarItinerario,
+  actualizarActividad,
+  eliminarActividad,
+};

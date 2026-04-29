@@ -12,6 +12,9 @@ const { Pago }             = require('./pago.model');
 const { Itinerario }       = require('./itinerario.model');
 const { Actividad }        = require('./actividad.model');
 const { Notificacion }     = require('./notificacion.model');
+const { Documento }        = require('./documento.model');
+const { Foto }             = require('./foto.model');
+const { Comision }         = require('./comision.model');
 
 // ── Asociaciones ─────────────────────────────────────────────
 
@@ -47,13 +50,39 @@ Actividad.belongsTo(Itinerario, { foreignKey: 'itinerario_id' });
 Usuario.hasMany(Notificacion, { foreignKey: 'usuario_id', as: 'notificaciones', onDelete: 'CASCADE' });
 Notificacion.belongsTo(Usuario, { foreignKey: 'usuario_id' });
 
+// Usuario → Documentos  (1:N)
+Usuario.hasMany(Documento, { foreignKey: 'usuario_id', as: 'documentos', onDelete: 'CASCADE' });
+Documento.belongsTo(Usuario, { foreignKey: 'usuario_id' });
+
+// Viaje → Documentos  (1:N, opcional)
+Viaje.hasMany(Documento, { foreignKey: 'viaje_id', as: 'documentos', onDelete: 'SET NULL' });
+Documento.belongsTo(Viaje, { foreignKey: 'viaje_id' });
+
+// Viaje → Fotos  (1:N)
+Viaje.hasMany(Foto, { foreignKey: 'viaje_id', as: 'fotos', onDelete: 'CASCADE' });
+Foto.belongsTo(Viaje, { foreignKey: 'viaje_id' });
+
+// Usuario → Fotos  (1:N)
+Usuario.hasMany(Foto, { foreignKey: 'usuario_id', as: 'fotos', onDelete: 'CASCADE' });
+Foto.belongsTo(Usuario, { foreignKey: 'usuario_id' });
+
+// Usuario → Comisiones  (1:N)
+Usuario.hasMany(Comision, { foreignKey: 'usuario_id', as: 'comisiones', onDelete: 'CASCADE' });
+Comision.belongsTo(Usuario, { foreignKey: 'usuario_id' });
+
+// Viaje → Comisiones  (1:N, opcional)
+Viaje.hasMany(Comision, { foreignKey: 'viaje_id', as: 'comisiones', onDelete: 'SET NULL' });
+Comision.belongsTo(Viaje, { foreignKey: 'viaje_id' });
+
 // ── Inicialización de la BD ──────────────────────────────────
 const inicializarDB = async () => {
   await sequelize.authenticate();
   console.log('✅ Conexión a MySQL establecida correctamente');
 
-  // sync() crea las tablas si no existen. En producción usaríamos migraciones.
-  await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+  // alter:true en desarrollo para añadir columnas nuevas sin borrar datos.
+  // En producción usar migraciones explícitas.
+  const alter = process.env.NODE_ENV !== 'production';
+  await sequelize.sync({ force: false, alter });
   console.log('✅ Tablas sincronizadas con la base de datos');
 };
 
@@ -69,4 +98,7 @@ module.exports = {
   Itinerario,
   Actividad,
   Notificacion,
+  Documento,
+  Foto,
+  Comision,
 };

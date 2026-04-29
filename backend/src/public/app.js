@@ -242,6 +242,39 @@ async function sendRefresh(btn) {
   }
 }
 
+// ── sendRaw (Authorization header custom, para tests de error) ───────────────
+async function sendRaw(btn, method, url, body, authHeader) {
+  const card = btn.closest('.card-body');
+  const responseEl = card?.querySelector('.response');
+  if (!responseEl) return;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  responseEl.innerHTML = '';
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (authHeader) headers['Authorization'] = authHeader;
+
+  const opts = { method, headers };
+  if (body !== null && body !== undefined && method !== 'GET') {
+    opts.body = JSON.stringify(body);
+  }
+
+  const t0 = Date.now();
+  try {
+    const res = await fetch(BASE + url, opts);
+    const elapsed = Date.now() - t0;
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json() : await res.text();
+    renderResponse(responseEl, res.status, data, elapsed, method, url);
+  } catch (err) {
+    renderResponse(responseEl, 0, { error: err.message }, Date.now() - t0, method, url);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enviar';
+  }
+}
+
 // ── Mapa de acciones ─────────────────────────────────────────────────────────
 const actions = {
   // Health
@@ -338,6 +371,69 @@ const actions = {
   'notif-leer': btn => send(btn, 'PATCH', `/api/notificaciones/${val('notif-id-leer')}/leer`, {}, true),
 
   'notif-delete': btn => send(btn, 'DELETE', `/api/notificaciones/${val('notif-id-delete')}`, null, true),
+
+  // ── Errores — JWT / Autorización ─────────────────────────────────────────
+  'err-no-token':       btn => send(btn, 'GET', '/api/viajes', null, false),
+  'err-token-invalido': btn => sendRaw(btn, 'GET', '/api/viajes', null, 'Bearer token.invalido.firma_falsa'),
+  'err-token-expirado': btn => sendRaw(btn, 'GET', '/api/viajes', null, `Bearer ${val('err-token-exp')}`),
+
+  // ── Errores — Auth 400 Validaciones ──────────────────────────────────────
+  'err-reg-vacio':          btn => send(btn, 'POST', '/api/auth/registro', {}),
+  'err-reg-email-invalido': btn => send(btn, 'POST', '/api/auth/registro', {
+    nombre: 'Test', apellidos: 'User', email: 'no-es-un-email', password: 'Password123!',
+  }),
+  'err-reg-pass-corta': btn => send(btn, 'POST', '/api/auth/registro', {
+    nombre: 'Test', apellidos: 'User', email: 'test.corta@example.com', password: 'abc',
+  }),
+  'err-login-email-invalido': btn => send(btn, 'POST', '/api/auth/login', {
+    email: 'no-es-email', password: 'Password123!',
+  }),
+  'err-login-sin-password': btn => send(btn, 'POST', '/api/auth/login', {
+    email: 'test@example.com',
+  }),
+  'err-verif-token-invalido': btn => send(btn, 'GET',
+    '/api/auth/verificar/00000000000000000000000000000000aaaabbbbccccdddd0000111122223333'),
+  'err-nueva-pass-invalido': btn => send(btn, 'POST', '/api/auth/nueva-password', {
+    token: 'tokenFalsoQueNoExisteEnLaBaseDeDatos12345', nuevaPassword: 'NuevaPass456!',
+  }),
+
+  // ── Errores — Auth 401 / 403 Credenciales ────────────────────────────────
+  'err-login-credenciales': btn => send(btn, 'POST', '/api/auth/login', {
+    email: 'usuario_inexistente_99999@example.com', password: 'ContrasenaIncorrecta999!',
+  }),
+  'err-login-no-verificado': btn => send(btn, 'POST', '/api/auth/login', {
+    email: val('err-email-no-verif'), password: val('err-pass-no-verif'),
+  }),
+
+  // ── Errores — Refresh 401 ────────────────────────────────────────────────
+  'err-refresh-sin-token': btn => send(btn, 'POST', '/api/auth/refresh', {}),
+  'err-refresh-invalido':  btn => send(btn, 'POST', '/api/auth/refresh', {
+    refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.invalidsignature',
+  }),
+  'err-refresh-revocado': btn => send(btn, 'POST', '/api/auth/refresh', {
+    refreshToken: val('err-refresh-revocado-tok'),
+  }),
+
+  // ── Errores — 409 Conflictos ─────────────────────────────────────────────
+  'err-reg-email-existe': btn => send(btn, 'POST', '/api/auth/registro', {
+    nombre: val('err-nombre-existe'), apellidos: 'Apellido',
+    email: val('err-email-existe'), password: 'Password123!',
+  }),
+  'err-viaje-ya-revelado':    btn => send(btn, 'PATCH', `/api/viajes/${val('err-viaje-revelado-id')}/revelar`, {}, true),
+  'err-reserva-ya-cancelada': btn => send(btn, 'PATCH', `/api/reservas/${val('err-reserva-cancelada-id')}/cancelar`, {}, true),
+  'err-itin-regen-no-revelado': btn => send(btn, 'POST', `/api/itinerarios/viaje/${val('err-viaje-no-revelado-id')}/regenerar`, {}, true),
+
+  // ── Errores — 404 No encontrado ──────────────────────────────────────────
+  'err-viaje-404':           btn => send(btn, 'GET',    '/api/viajes/99999', null, true),
+  'err-reservas-viaje-404':  btn => send(btn, 'POST',   '/api/reservas', { viajeId: 99999, hotel: 'Hotel Test', noches: 3 }, true),
+  'err-reservas-cancelar-404': btn => send(btn, 'PATCH', '/api/reservas/99999/cancelar', {}, true),
+  'err-itin-404':            btn => send(btn, 'GET',    `/api/itinerarios/viaje/${val('err-viaje-sin-itin')}`, null, true),
+  'err-notif-leer-404':      btn => send(btn, 'PATCH',  '/api/notificaciones/99999/leer', {}, true),
+  'err-notif-delete-404':    btn => send(btn, 'DELETE', '/api/notificaciones/99999', null, true),
+  'err-doc-viaje-404':       btn => send(btn, 'GET',    '/api/documentos/viaje/99999', null, true),
+  'err-doc-404':             btn => send(btn, 'PUT',    '/api/documentos/99999', { nombre: 'Test' }, true),
+  'err-doc-delete-404':      btn => send(btn, 'DELETE', '/api/documentos/99999', null, true),
+  'err-perfil-404':          btn => sendRaw(btn, 'GET', '/api/perfil/me', null, `Bearer ${val('err-perfil-jwt-eliminado')}`),
 };
 
 // ── Inicialización (cuando el DOM está listo) ─────────────────────────────────

@@ -11,7 +11,7 @@ const listarDocumentos = async (req, res, next) => {
       where: { usuario_id: req.usuario.id, activo: true },
       order: [['fecha_creacion', 'DESC']],
     });
-    res.json({ items: documentos });
+    res.json({ documentos });
   } catch (error) {
     next(error);
   }
@@ -29,7 +29,7 @@ const listarDocumentosDeViaje = async (req, res, next) => {
       where: { usuario_id: req.usuario.id, viaje_id: req.params.viajeId, activo: true },
       order: [['fecha_creacion', 'DESC']],
     });
-    res.json({ items: documentos });
+    res.json({ documentos });
   } catch (error) {
     next(error);
   }

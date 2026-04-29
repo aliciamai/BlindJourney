@@ -4,13 +4,11 @@
 -- Codificacion: UTF-8 (sin BOM)
 --
 -- INSTRUCCIONES:
---   1. Genera el hash bcrypt ejecutando en la carpeta /backend:
---        node -e "require('bcryptjs').hash('Test1234!', 12).then(console.log)"
---   2. Reemplaza las 3 ocurrencias de HASH_PENDIENTE con el hash.
---   3. Importa este archivo en DBeaver o con:
---        mysql -u root -p < seed.sql
+--   Importa este archivo en DBeaver o con:
+--     mysql -u root -p < blindjourney_estructura_y_datos.sql
 --
 -- Contrasena de todos los usuarios de prueba: Test1234!
+--   Hash bcrypt (coste 12): $2a$12$ZMXhfouEaSGIoGz1nw/9l.hRI3cdZXQYRqhYRXWAlYrBLDMXIVu1C
 -- ============================================================
 
 SET NAMES 'utf8mb4';
@@ -26,6 +24,8 @@ USE blindjourney;
 
 -- Borrar tablas existentes respetando FK (orden inverso de dependencias)
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS comisiones;
+DROP TABLE IF EXISTS fotos_viaje;
 DROP TABLE IF EXISTS documentos;
 DROP TABLE IF EXISTS notificaciones;
 DROP TABLE IF EXISTS actividades;
@@ -180,6 +180,8 @@ CREATE TABLE actividades (
   ubicacion        VARCHAR(255)  DEFAULT NULL,
   duracion_minutos INT           DEFAULT NULL,
   coste_estimado   DECIMAL(10,2) DEFAULT NULL,
+  importante       BOOL          NOT NULL DEFAULT 0,
+  completada       BOOL          NOT NULL DEFAULT 0,
   fecha_creacion   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   CONSTRAINT fk_actividad_itinerario FOREIGN KEY (itinerario_id) REFERENCES itinerarios (id) ON DELETE CASCADE
@@ -219,6 +221,40 @@ CREATE TABLE documentos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+-- ── fotos_viaje ──────────────────────────────────────────────
+CREATE TABLE fotos_viaje (
+  id               INT          NOT NULL AUTO_INCREMENT,
+  viaje_id         INT          NOT NULL,
+  usuario_id       INT          NOT NULL,
+  url              LONGTEXT     NOT NULL,
+  descripcion      VARCHAR(500) DEFAULT NULL,
+  ubicacion_nombre VARCHAR(255) DEFAULT NULL,
+  latitud          DECIMAL(10,8) DEFAULT NULL,
+  longitud         DECIMAL(11,8) DEFAULT NULL,
+  fecha_foto       DATETIME     DEFAULT NULL,
+  activo           BOOL         NOT NULL DEFAULT 1,
+  fecha_creacion   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_foto_viaje   FOREIGN KEY (viaje_id)   REFERENCES viajes   (id) ON DELETE CASCADE,
+  CONSTRAINT fk_foto_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── comisiones ───────────────────────────────────────────────
+CREATE TABLE comisiones (
+  id              INT          NOT NULL AUTO_INCREMENT,
+  usuario_id      INT          NOT NULL,
+  viaje_id        INT          DEFAULT NULL,
+  tipo            ENUM('vuelo','hotel','experiencia','seguro') NOT NULL,
+  proveedor       VARCHAR(100) DEFAULT NULL,
+  destino_ciudad  VARCHAR(100) DEFAULT NULL,
+  url_destino     TEXT         DEFAULT NULL,
+  fecha_creacion  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_comision_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+  CONSTRAINT fk_comision_viaje   FOREIGN KEY (viaje_id)   REFERENCES viajes   (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- ============================================================
 -- DATOS DE PRUEBA
 -- ============================================================
@@ -229,13 +265,13 @@ INSERT INTO usuarios
    email_verificado, idioma, fecha_creacion, fecha_actualizacion)
 VALUES
   (1, 'Alicia', 'Maillo González',  'alicia@blindjourney.test',
-   'HASH_PENDIENTE', '+34 611 223 344', 1, 'es', NOW(), NOW()),
+   '$2a$12$ZMXhfouEaSGIoGz1nw/9l.hRI3cdZXQYRqhYRXWAlYrBLDMXIVu1C', '+34 611 223 344', 1, 'es', NOW(), NOW()),
 
   (2, 'Carlos', 'Ruiz Fernández',   'carlos@blindjourney.test',
-   'HASH_PENDIENTE', '+34 622 334 455', 1, 'es', NOW(), NOW()),
+   '$2a$12$ZMXhfouEaSGIoGz1nw/9l.hRI3cdZXQYRqhYRXWAlYrBLDMXIVu1C', '+34 622 334 455', 1, 'es', NOW(), NOW()),
 
   (3, 'María',  'García López',     'maria@blindjourney.test',
-   'HASH_PENDIENTE', '+34 633 445 566', 1, 'es', NOW(), NOW());
+   '$2a$12$ZMXhfouEaSGIoGz1nw/9l.hRI3cdZXQYRqhYRXWAlYrBLDMXIVu1C', '+34 633 445 566', 1, 'es', NOW(), NOW());
 
 
 -- ── perfiles ─────────────────────────────────────────────────

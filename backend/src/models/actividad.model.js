@@ -45,6 +45,14 @@ const Actividad = sequelize.define('Actividad', {
   coste_estimado: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  importante: {
+    type:         DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  completada: {
+    type:         DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   tableName:  'actividades',
   timestamps: true,

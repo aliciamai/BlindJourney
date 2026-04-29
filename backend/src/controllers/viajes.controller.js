@@ -12,7 +12,7 @@ const listarViajes = async (req, res, next) => {
       where:  { usuario_id: req.usuario.id },
       order:  [['fecha_creacion', 'DESC']],
     });
-    res.json({ items: viajes, total: viajes.length });
+    res.json({ viajes, total: viajes.length });
   } catch (error) {
     next(error);
   }
@@ -101,11 +101,9 @@ const revelarDestino = async (req, res, next) => {
       fecha_revelacion: new Date(),
     });
 
-    res.json({
-      message: 'Destino revelado',
-      destino: viaje.destino_ciudad,
-      pais:    viaje.destino_pais,
-    });
+    await viaje.reload();
+
+    res.json({ message: 'Destino revelado', viaje });
   } catch (error) {
     next(error);
   }

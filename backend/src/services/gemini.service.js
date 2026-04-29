@@ -1,23 +1,37 @@
 // ============================================================
-// BlindJourney – Servicio de IA con Google Gemini
-// Genera candidatos de destino e itinerarios día a día
+// BlindJourney – Servicio de IA
+// Primario: Google Gemini (cuenta estudiante)
+// Fallback:  Groq (LLaMA 3.3) cuando Gemini falla o agota cuota
 // ============================================================
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
+const { normalizarCandidatos, normalizarItinerario } = require('./normalizar.service');
 
-let _model = null;
-const getModel = () => {
-  if (!_model) {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY no configurada en .env');
-    }
+// ── Gemini ────────────────────────────────────────────────────
+let _geminiModel = null;
+const getGeminiModel = () => {
+  if (!_geminiModel) {
+    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY no configurada en .env');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    _model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    _geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
-  return _model;
+  return _geminiModel;
 };
 
-// Parsea la respuesta de Gemini limpiando posibles bloques de markdown
+// ── Groq (fallback) ───────────────────────────────────────────
+let _groqClient = null;
+const getGroqClient = () => {
+  if (!_groqClient) {
+    if (!process.env.GROQ_API_KEY) throw new Error('GROQ_API_KEY no configurada en .env');
+    _groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+  return _groqClient;
+};
+
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
+
+// ── Helpers ───────────────────────────────────────────────────
 const parsearJSON = (texto) => {
   const limpio = texto
     .replace(/```json\s*/gi, '')
@@ -26,9 +40,23 @@ const parsearJSON = (texto) => {
   return JSON.parse(limpio);
 };
 
-/**
- * Genera entre 10 y 12 destinos candidatos basados en las preferencias del usuario.
- */
+// Llama a Gemini; si falla por cualquier motivo usa Groq como fallback
+const generarConIA = async (prompt) => {
+  try {
+    const result = await getGeminiModel().generateContent(prompt);
+    return { texto: result.response.text(), proveedor: 'gemini' };
+  } catch (geminiError) {
+    console.warn('[IA] Gemini no disponible, usando Groq como fallback:', geminiError.message);
+    const completion = await getGroqClient().chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+    });
+    return { texto: completion.choices[0].message.content, proveedor: 'groq' };
+  }
+};
+
+// ── Candidatos de destino ─────────────────────────────────────
 const generarCandidatos = async ({
   presupuesto,
   diasViaje,
@@ -62,21 +90,19 @@ Devuelve SOLO un array JSON válido (sin texto extra ni markdown) con este forma
 ]`;
 
   try {
-    const result  = await getModel().generateContent(prompt);
-    const texto   = result.response.text();
-    const datos   = parsearJSON(texto);
-
+    const { texto, proveedor } = await generarConIA(prompt);
+    const datos = parsearJSON(texto);
     if (!Array.isArray(datos)) throw new Error('Respuesta no es un array');
-    return datos.slice(0, 15);
+    const normalizados = normalizarCandidatos(datos);
+    console.log(`[IA] ${normalizados.length} candidatos generados con ${proveedor}`);
+    return normalizados.slice(0, 15);
   } catch (error) {
-    console.error('[GEMINI] Error generando candidatos:', error.message);
+    console.error('[IA] Error generando candidatos:', error.message);
     throw new Error('Error al generar destinos con IA');
   }
 };
 
-/**
- * Genera un itinerario detallado día a día para el destino revelado.
- */
+// ── Itinerario día a día ──────────────────────────────────────
 const generarItinerario = async ({
   ciudad,
   pais,
@@ -116,14 +142,14 @@ Devuelve SOLO un array JSON válido (sin texto extra ni markdown):
 Incluye 4-6 actividades por día. Día 1: llegada. Último día: check-out y vuelo de regreso.`;
 
   try {
-    const result = await getModel().generateContent(prompt);
-    const texto  = result.response.text();
-    const datos  = parsearJSON(texto);
-
+    const { texto, proveedor } = await generarConIA(prompt);
+    const datos = parsearJSON(texto);
     if (!Array.isArray(datos)) throw new Error('Respuesta no es un array');
-    return datos;
+    const normalizado = normalizarItinerario(datos);
+    console.log(`[IA] Itinerario (${normalizado.length} días) generado con ${proveedor}`);
+    return normalizado;
   } catch (error) {
-    console.error('[GEMINI] Error generando itinerario:', error.message);
+    console.error('[IA] Error generando itinerario:', error.message);
     throw new Error('Error al generar itinerario con IA');
   }
 };
