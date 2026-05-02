@@ -21,8 +21,8 @@ API REST del sistema BlindJourney, una plataforma de viajes sorpresa que oculta 
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/alicia-maillo/blindjourney.git
-cd blindjourney/backend
+git clone https://github.com/aliciamai/BlindJourney.git
+cd BlindJourney/backend
 
 # 2. Instalar dependencias
 npm install
@@ -32,7 +32,7 @@ cp .env.example .env
 # Editar .env con tus credenciales
 
 # 4. Crear la base de datos
-mysql -u root -p < ../database/blindjourney_schema.sql
+mysql -u root -p < ../bbdd/blindjourney_estructura_y_datos.sql
 
 # 5. Arrancar en modo desarrollo (con auto-reload)
 npm run dev
