@@ -56,3 +56,4 @@ documentation/
 
 # ── Claude Code (configuración local del desarrollador) ───
 .claude/
+claude.md

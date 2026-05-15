@@ -1,0 +1,285 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "trips": "Viajes",
+    "search": "Buscar",
+    "docs": "Docs",
+    "profile": "Perfil"
+  },
+  "login": {
+    "tagline": "Tu próxima aventura es un misterio",
+    "email": "Email",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "signIn": "Iniciar Sesión",
+    "or": "o",
+    "createAccount": "Crear una cuenta",
+    "terms": "Al continuar aceptas los",
+    "termsLink": "Términos de uso",
+    "error": "Credenciales incorrectas"
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "email": "Email",
+    "password": "Contraseña",
+    "passwordHint": "Mínimo 8 caracteres, una mayúscula y un número",
+    "passwordError": "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.",
+    "phone": "Teléfono (opcional)",
+    "submit": "Registrarme",
+    "emailVerification": "Recibirás un email de verificación",
+    "success": "¡Cuenta creada! Revisa tu email para verificar tu cuenta.",
+    "goToLogin": "Ir al login",
+    "strength": { "weak": "Débil", "medium": "Media", "strong": "Fuerte" }
+  },
+  "dashboard": {
+    "goodMorning": "Buenos días",
+    "goodAfternoon": "Buenas tardes",
+    "goodEvening": "Buenas noches",
+    "nextTrip": "PRÓXIMO VIAJE",
+    "nextTripRevealed": "PRÓXIMO VIAJE — REVELADO",
+    "hiddenDest": "Destino Oculto",
+    "revealCountdown": "El destino se revela en...",
+    "destConfirmed": "Destino confirmado",
+    "viewItinerary": "Ver Itinerario 🗺",
+    "viewDetails": "Ver detalles",
+    "noActiveTrips": "Sin viajes activos",
+    "noActiveTripsDesc": "¿Listo para tu próxima sorpresa?",
+    "myTrips": "Mis viajes",
+    "viewAll": "Ver todos",
+    "newTrip": "Nuevo viaje sorpresa"
+  },
+  "trips": {
+    "title": "Mis viajes",
+    "active": "Activos",
+    "history": "Historial",
+    "noTrips": "Aún no tienes viajes",
+    "noTripsDesc": "Crea tu primer viaje sorpresa"
+  },
+  "newTrip": {
+    "title": "Nuevo viaje",
+    "steps": ["Fechas", "Presupuesto", "Preferencias", "Destinos", "Confirmar", "Pago"],
+    "next": "Siguiente",
+    "step1": {
+      "title": "¿Cuándo viajas?",
+      "subtitle": "Mínimo 3 días, máximo 30",
+      "startDate": "Salida",
+      "endDate": "Regreso",
+      "travelersLabel": "Número de viajeros",
+      "person": "persona",
+      "people": "personas"
+    },
+    "step2": {
+      "title": "¿Cuál es tu presupuesto?",
+      "subtitle": "Por persona, todo incluido",
+      "customize": "o personaliza",
+      "min": "Mínimo (€)",
+      "max": "Máximo (€)",
+      "includes": "Incluye:",
+      "flight": "✈ Vuelo",
+      "accommodation": "🏨 Alojamiento",
+      "transfers": "🚌 Traslados",
+      "budgets": [
+        { "name": "Económico", "range": "300–600€" },
+        { "name": "Estándar", "range": "600–1200€" },
+        { "name": "Premium", "range": "1200€+" }
+      ]
+    },
+    "step3": {
+      "title": "Cuéntanos más",
+      "subtitle": "Para un destino perfecto para ti",
+      "interests": "¿Qué te gusta?",
+      "accommodation": "Tipo de alojamiento",
+      "dietary": "Restricciones alimentarias",
+      "activityLevel": "Nivel de actividad física",
+      "generateBtn": "Ver destinos ✨"
+    },
+    "step4": {
+      "title": "Destinos candidatos",
+      "subtitle": "Veta los que no te gustan — el sistema elige el tuyo ✨",
+      "noDestinations": "No se generaron candidatos. El sistema elegirá por ti.",
+      "vetoed_one": "{{count}} destino vetado",
+      "vetoed_other": "{{count}} destinos vetados",
+      "ban": "Vetar"
+    },
+    "step5": {
+      "title": "Confirmar reserva",
+      "subtitle": "Revisa los detalles antes de continuar",
+      "dates": "📅 Fechas",
+      "duration": "🌙 Duración",
+      "nights_one": "{{count}} noche",
+      "nights_other": "{{count}} noches",
+      "travelers": "👥 Viajeros",
+      "person_one": "{{count}} persona",
+      "person_other": "{{count}} personas",
+      "budget": "💰 Presupuesto",
+      "budgetValue": "Hasta {{amount}}€ por persona",
+      "hiddenAlert": "Tu destino permanecerá oculto",
+      "hiddenDesc": "Se revelará 48 horas antes de tu viaje. ¡Prepárate para la sorpresa!",
+      "confirm": "Confirmar y reservar",
+      "reservationCreated": "Reserva creada — ID #{{id}}. Pago pendiente de confirmar.",
+      "viewTrip": "Ver mi viaje"
+    },
+    "step6": {
+      "title": "Pago seguro",
+      "subtitle": "Introduce los datos de tu tarjeta para confirmar el viaje",
+      "totalLabel": "Total a pagar",
+      "perPersonNote": "Por persona · Todo incluido",
+      "cardDetails": "Datos de la tarjeta",
+      "cardNumber": "Número de tarjeta",
+      "expiry": "Caducidad",
+      "cvv": "CVV",
+      "cardHolder": "Titular de la tarjeta",
+      "cardHolderPlaceholder": "Nombre Apellido",
+      "secureNote": "Pago seguro con cifrado SSL de 256 bits",
+      "payBtn": "Pagar",
+      "processing": "Procesando...",
+      "successTitle": "¡Pago completado!",
+      "successDesc": "Tu reserva está confirmada. Te redirigimos a tu viaje...",
+      "errorGeneric": "Error al procesar el pago. Inténtalo de nuevo."
+    },
+    "errors": {
+      "selectDates": "Selecciona las fechas del viaje",
+      "minDays": "El viaje debe durar al menos 3 días",
+      "maxDays": "El viaje no puede superar 30 días",
+      "invalidBudget": "Introduce un presupuesto válido"
+    }
+  },
+  "tripDetail": {
+    "yourTrip": "Tu viaje",
+    "surprise": {
+      "title": "🔒 Tu viaje está listo",
+      "subtitle": "El destino se revelará en...",
+      "secretDest": "Destino Secreto",
+      "preparing": "Preparamos tu aventura perfecta",
+      "clues": "Pistas desbloqueadas 🔓",
+      "weather": "Clima",
+      "language": "Idioma",
+      "flag": "Bandera",
+      "flagLocked": "🔒 Se desvela en 48h",
+      "revealBtn": "Revelar ahora (demo)"
+    },
+    "revealed": {
+      "flight": "Vuelo",
+      "hotel": "Hotel",
+      "toBeConfirmed": "Por confirmar",
+      "entryReqs": "Requisitos de entrada",
+      "entryReqsText": "✅ DNI válido · Consulta visa y vacunas según destino",
+      "viewItinerary": "Ver mi itinerario 🗺",
+      "downloadDocs": "Descargar documentos 📥"
+    }
+  },
+  "album": {
+    "title": "Álbum de recuerdos",
+    "empty": "Aún no hay recuerdos",
+    "emptyDesc": "Añade las fotos de tu viaje",
+    "add": "Añadir foto",
+    "save": "Guardar foto",
+    "desc": "Descripción (opcional)",
+    "place": "Lugar (opcional)",
+    "pick": "Toca para elegir una foto"
+  },
+  "buscador": {
+    "title": "Buscador de viajes",
+    "subtitle": "Encuentra vuelos, hoteles y experiencias en un clic",
+    "flights": "Vuelos",
+    "hotels": "Hoteles",
+    "experiences": "Experiencias",
+    "destination": "Destino",
+    "search": "Buscar",
+    "compareOn": "Comparar en",
+    "disclaimer": "BlindJourney puede recibir una comisión cuando reservas a través de estos enlaces",
+    "yourSearches": "Tus búsquedas",
+    "total": "Total",
+    "swipeHint": "← Desliza para eliminar · Desliza → para marcar importante · ✓ para completar"
+  },
+  "itinerary": {
+    "subtitle": "Generado por IA · personalizado para ti",
+    "tabList": "Lista",
+    "tabMap": "Mapa",
+    "noItinerary": "Sin itinerario aún",
+    "noItineraryDesc": "Genera tu plan personalizado con IA",
+    "generate": "Generar itinerario",
+    "regenerate": "Regenerar itinerario",
+    "regenerating": "Regenerando...",
+    "day": "Día",
+    "map": {
+      "noKey": "Configura VITE_GOOGLE_MAPS_API_KEY en el archivo .env para mostrar el mapa.",
+      "loading": "Cargando mapa...",
+      "noActivities": "No hay actividades con ubicación para mostrar en el mapa."
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "originCity": "Ciudad de origen",
+    "interests": "¿Qué te gusta?",
+    "accommodation": "Tipo de alojamiento",
+    "dietary": "Restricciones alimentarias",
+    "activityLevel": "Nivel de actividad física",
+    "save": "Guardar preferencias",
+    "logout": "Cerrar sesión",
+    "saveSuccess": "Preferencias guardadas correctamente"
+  },
+  "documents": {
+    "title": "Documentos",
+    "noDocuments": "Sin documentos",
+    "noDocumentsDesc": "Los documentos de tus viajes aparecerán aquí",
+    "generalDocs": "Generales",
+    "trip": "Viaje #{{id}}",
+    "types": {
+      "pasaporte": "Pasaporte",
+      "visa": "Visa",
+      "billete_vuelo": "Billete de vuelo",
+      "billete_tren": "Billete de tren",
+      "reserva_hotel": "Reserva hotel",
+      "seguro": "Seguro de viaje",
+      "otro": "Documento"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "back": "Atrás",
+    "confirmed": "Confirmado",
+    "pending": "Pendiente",
+    "revealed": "Revelado",
+    "completed": "Completado",
+    "cancelled": "Cancelado",
+    "hiddenDest": "Destino Oculto",
+    "notFound": "Página no encontrada",
+    "notFoundDesc": "Parece que esta aventura no existe",
+    "backHome": "Volver al inicio"
+  },
+  "interests": {
+    "cultura": "🏛 Cultura",
+    "playa": "🌊 Playa",
+    "gastronomia": "🍽 Gastronomía",
+    "montana": "🏔 Montaña",
+    "ocio_nocturno": "🎭 Ocio nocturno",
+    "naturaleza": "🌿 Naturaleza",
+    "compras": "🛍 Compras",
+    "aventura": "🧗 Aventura"
+  },
+  "accommodations": {
+    "hotel": "🏨 Hotel",
+    "apartamento": "🏠 Apartamento",
+    "hostal": "🏕 Hostal"
+  },
+  "dietary": {
+    "vegetariano": "🥗 Vegetariano",
+    "vegano": "🌱 Vegano",
+    "sin_gluten": "🌾 Sin gluten"
+  },
+  "activityLevels": {
+    "tranquilo": "Tranquilo",
+    "moderado": "Moderado",
+    "activo": "Activo",
+    "aventurero": "Aventurero"
+  },
+  "countdown": {
+    "days": "Días",
+    "hours": "Horas",
+    "min": "Min",
+    "sec": "Seg"
+  }
+}

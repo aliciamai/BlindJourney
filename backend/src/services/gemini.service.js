@@ -42,17 +42,27 @@ const parsearJSON = (texto) => {
 
 // Llama a Gemini; si falla por cualquier motivo usa Groq como fallback
 const generarConIA = async (prompt) => {
+  let geminiError = null;
   try {
     const result = await getGeminiModel().generateContent(prompt);
     return { texto: result.response.text(), proveedor: 'gemini' };
-  } catch (geminiError) {
-    console.warn('[IA] Gemini no disponible, usando Groq como fallback:', geminiError.message);
+  } catch (err) {
+    geminiError = err;
+    console.warn('[IA] Gemini falló:', err.message);
+  }
+
+  try {
+    console.log('[IA] Intentando con Groq como fallback...');
     const completion = await getGroqClient().chat.completions.create({
       model: GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
     });
+    console.log('[IA] Groq funcionó correctamente');
     return { texto: completion.choices[0].message.content, proveedor: 'groq' };
+  } catch (groqError) {
+    console.error('[IA] AMBAS IAS FALLARON - Gemini:', geminiError.message, '| Groq:', groqError.message);
+    throw new Error(`Ambas IAs fallaron. Gemini: ${geminiError.message}. Groq: ${groqError.message}`);
   }
 };
 

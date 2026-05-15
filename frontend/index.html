@@ -1,0 +1,37 @@
+<!--
+  ============================================================
+  BlindJourney – Punto de entrada HTML
+  Autora: Alicia Maillo
+
+  Este es el archivo HTML principal de la aplicación.
+  Carga las fuentes de Google (Playfair Display para títulos,
+  IBM Plex Sans para textos), define el color de fondo oscuro,
+  y monta la aplicación React en el div#root mediante main.jsx.
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <!-- Charset y viewport para garantizar compatibilidad en dispositivos móviles -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlindJourney</title>
+
+    <!-- Preconexiones para acelerar la carga de fuentes de Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Fuentes personalizadas: Playfair Display (títulos elegantes) e IBM Plex Sans (textos legibles) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <!-- Fondo oscuro #0d0f14 (gris oscuro/carbón) como color base de la app -->
+  <body style="margin:0;background:#0d0f14;">
+    <!-- Div raíz donde React montará toda la aplicación -->
+    <div id="root"></div>
+    <!-- Carga el punto de entrada React: main.jsx, que define rutas y proveedores globales -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

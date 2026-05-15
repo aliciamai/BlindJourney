@@ -13,7 +13,7 @@ const obtenerItinerarioDeViaje = async (req, res, next) => {
     });
     if (!viaje) return res.status(404).json({ error: 'Viaje no encontrado' });
 
-    const itinerario = await Itinerario.findOne({
+    let itinerario = await Itinerario.findOne({
       where:   { viaje_id: req.params.viajeId },
       include: [{
         model: Actividad,
@@ -21,8 +21,62 @@ const obtenerItinerarioDeViaje = async (req, res, next) => {
         order: [['dia', 'ASC'], ['hora', 'ASC']],
       }],
     });
+
+    // Si no existe itinerario, generarlo automáticamente
     if (!itinerario) {
-      return res.status(404).json({ error: 'Este viaje aún no tiene itinerario generado' });
+      if (!viaje.destino_ciudad) {
+        return res.status(409).json({ error: 'El destino aún no ha sido asignado' });
+      }
+
+      try {
+        const perfil = await Perfil.findOne({ where: { usuario_id: req.usuario.id } });
+        const dias = await geminiService.generarItinerario({
+          ciudad:                    viaje.destino_ciudad,
+          pais:                      viaje.destino_pais,
+          diasViaje:                 viaje.duracion || 7,
+          presupuestoDiario:         viaje.presupuesto ? viaje.presupuesto / (viaje.duracion || 7) : 100,
+          intereses:                 perfil?.intereses                  || [],
+          nivelActividad:            perfil?.nivel_actividad            || 'moderado',
+          restriccionesAlimentarias: perfil?.restricciones_alimentarias || [],
+        });
+
+        itinerario = await Itinerario.create({
+          viaje_id:        viaje.id,
+          destino_ciudad:  viaje.destino_ciudad,
+          destino_pais:    viaje.destino_pais,
+          generado_por_ia: true,
+        });
+
+        for (const dia of dias) {
+          for (const act of dia.actividades || []) {
+            await Actividad.create({
+              itinerario_id:    itinerario.id,
+              dia:              dia.dia,
+              hora:             act.hora,
+              nombre:           act.nombre,
+              descripcion:      act.descripcion,
+              tipo:             act.tipo,
+              ubicacion:        act.ubicacion,
+              duracion_minutos: act.duracion_minutos,
+              coste_estimado:   act.coste_estimado,
+            });
+          }
+        }
+
+        // Recargar itinerario con actividades
+        itinerario = await Itinerario.findOne({
+          where:   { id: itinerario.id },
+          include: [{
+            model: Actividad,
+            as:    'actividades',
+            order: [['dia', 'ASC'], ['hora', 'ASC']],
+          }],
+        });
+      } catch (iaError) {
+        console.error('[ITINERARIOS] ❌ ERROR AL GENERAR ITINERARIO - Ambas IAs fallaron:', iaError.message);
+        console.error('[ITINERARIOS] Stack:', iaError.stack);
+        return res.status(500).json({ error: 'No se pudo generar el itinerario. Intenta de nuevo más tarde.' });
+      }
     }
 
     res.json(itinerario);

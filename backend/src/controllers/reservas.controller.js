@@ -2,7 +2,7 @@
 // BlindJourney – Controlador de Reservas
 // ============================================================
 
-const { Reserva, Viaje } = require('../models/index');
+const { Reserva, Viaje, Pago, Candidato } = require('../models/index');
 
 // ── GET /api/reservas ────────────────────────────────────────
 const listarReservas = async (req, res, next) => {
@@ -25,22 +25,42 @@ const listarReservas = async (req, res, next) => {
 // ── POST /api/reservas ───────────────────────────────────────
 const crearReserva = async (req, res, next) => {
   try {
-    const { viajeId, hotel, transporte } = req.body;
+    const { viaje_id, hotel, transporte } = req.body;
 
     // Verificar que el viaje pertenece al usuario
     const viaje = await Viaje.findOne({
-      where: { id: viajeId, usuario_id: req.usuario.id },
+      where: { id: viaje_id, usuario_id: req.usuario.id },
+      include: [{ model: Candidato, as: 'candidatos' }],
     });
     if (!viaje) return res.status(404).json({ error: 'Viaje no encontrado' });
 
+    // Elegir un destino al azar de los candidatos NO vetados
+    const candidatosDisponibles = viaje.candidatos.filter((c) => !c.vetado);
+    if (candidatosDisponibles.length > 0) {
+      const destinoElegido = candidatosDisponibles[Math.floor(Math.random() * candidatosDisponibles.length)];
+      await viaje.update({
+        destino_ciudad: destinoElegido.ciudad,
+        destino_pais: destinoElegido.pais,
+      });
+    }
+
     const reserva = await Reserva.create({
-      viaje_id:    viajeId,
+      viaje_id:    viaje_id,
       alojamiento: hotel        || null,
       transporte:  transporte   || null,
       estado:      'pendiente',
     });
 
-    res.status(201).json({ message: 'Reserva creada', reserva });
+    res.status(201).json({
+      message: 'Reserva creada',
+      reserva: {
+        id: reserva.id,
+        viaje_id: reserva.viaje_id,
+        estado: reserva.estado,
+        alojamiento: reserva.alojamiento,
+        transporte: reserva.transporte,
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -69,4 +89,37 @@ const cancelarReserva = async (req, res, next) => {
   }
 };
 
-module.exports = { listarReservas, crearReserva, cancelarReserva };
+// ── POST /api/reservas/:id/simular-pago ──────────────────────
+const simularPago = async (req, res, next) => {
+  try {
+    const reserva = await Reserva.findOne({
+      where:   { id: req.params.id },
+      include: [{ model: Viaje, as: 'viaje', where: { usuario_id: req.usuario.id } }],
+    });
+    if (!reserva) return res.status(404).json({ error: 'Reserva no encontrada' });
+    if (reserva.estado === 'confirmada') {
+      return res.status(409).json({ error: 'La reserva ya está confirmada y pagada' });
+    }
+
+    const viaje = reserva.viaje;
+
+    const pago = await Pago.create({
+      reserva_id:               reserva.id,
+      stripe_payment_intent_id: 'pi_demo_' + Date.now(),
+      importe:                  viaje.presupuesto,
+      moneda:                   'eur',
+      estado:                   'completado',
+      fecha_pago:               new Date(),
+    });
+
+    await reserva.update({ estado: 'confirmada' });
+    const revelarEn = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    await viaje.update({ estado: 'confirmado', revelar_en: revelarEn });
+
+    res.json({ success: true, reserva, viaje, pago });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { listarReservas, crearReserva, cancelarReserva, simularPago };
