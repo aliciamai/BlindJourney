@@ -52,29 +52,19 @@ const registro = async (req, res, next) => {
     // 12 es un buen equilibrio entre seguridad y rendimiento (aprox. 250ms)
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Generamos un token único para verificar el email.
-    // randomBytes(32) genera 32 bytes aleatorios; toString('hex') los convierte
-    // a una cadena hexadecimal de 64 caracteres
-    const tokenVerificacion = crypto.randomBytes(32).toString('hex');
-
-    // Guardamos el usuario en la base de datos con el hash, no la contraseña
+    // TODO: Temporal - activar email automáticamente. Cambiar a verificación cuando haya servicio de email.
     const nuevoUsuario = await UsuarioModel.crear({
       nombre,
       apellidos,
       email,
       passwordHash,
-      telefono: telefono || null, // Si no se proporcionó, guardamos null
-      tokenVerificacion,
+      telefono: telefono || null,
+      emailVerificado: true,
     });
-
-    // Enviamos el email con el enlace de verificación
-    // No esperamos a que termine para responder (no bloqueamos al usuario)
-    emailService.enviarVerificacion(email, nombre, tokenVerificacion)
-      .catch(err => console.error('[EMAIL] Error al enviar verificación:', err));
 
     // Respondemos con 201 Created (no 200, porque hemos creado un recurso)
     res.status(201).json({
-      message: 'Cuenta creada. Revisa tu email para verificar la cuenta.',
+      message: 'Cuenta creada correctamente. Puedes iniciar sesión.',
       usuarioId: nuevoUsuario.id,
     });
 

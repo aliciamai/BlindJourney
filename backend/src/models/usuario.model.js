@@ -76,7 +76,8 @@ const crear = (datos) =>
     email:              datos.email,
     password_hash:      datos.passwordHash,
     telefono:           datos.telefono || null,
-    token_verificacion: datos.tokenVerificacion,
+    email_verificado:   datos.emailVerificado || false,
+    token_verificacion: datos.tokenVerificacion || null,
   });
 
 const guardarRefreshToken = (usuarioId, refreshToken) =>

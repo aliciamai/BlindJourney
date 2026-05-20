@@ -14,7 +14,7 @@ const getGeminiModel = () => {
   if (!_geminiModel) {
     if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY no configurada en .env');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    _geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    _geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
   }
   return _geminiModel;
 };
@@ -33,11 +33,37 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 // ── Helpers ───────────────────────────────────────────────────
 const parsearJSON = (texto) => {
-  const limpio = texto
+  let limpio = texto
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
-  return JSON.parse(limpio);
+
+  // Eliminar comentarios JSON no válidos (// y /* */)
+  limpio = limpio.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Manejar múltiples problemas de JSON mal formado
+  // 1. Reemplazar saltos de línea múltiples dentro de strings por espacios
+  limpio = limpio.replace(/(["\'])\s*\n\s*/g, '$1 ');
+
+  // 2. Asegurar que los números flotantes están bien formados
+  limpio = limpio.replace(/:\s*([0-9]+)\s*,/g, ': $1,');
+  limpio = limpio.replace(/:\s*([0-9]+\.?[0-9]*)\s*\}/g, ': $1}');
+  limpio = limpio.replace(/:\s*([0-9]+\.?[0-9]*)\s*\]/g, ': $1]');
+
+  try {
+    return JSON.parse(limpio);
+  } catch (err) {
+    // Si sigue fallando, intentar una estrategia más agresiva
+    console.warn('[IA] Parse JSON falló, intentando estrategia alternativa:', err.message);
+    // Buscar el primer [ y el último ]
+    const start = limpio.indexOf('[');
+    const end = limpio.lastIndexOf(']') + 1;
+    if (start >= 0 && end > start) {
+      const jsonStr = limpio.substring(start, end);
+      return JSON.parse(jsonStr);
+    }
+    throw err;
+  }
 };
 
 // Llama a Gemini; si falla por cualquier motivo usa Groq como fallback
@@ -85,19 +111,8 @@ Criterios:
 - Restricciones alimentarias: ${(restriccionesAlimentarias || []).join(', ') || 'ninguna'}
 - Viajeros: ${numViajeros || 1}
 
-Devuelve SOLO un array JSON válido (sin texto extra ni markdown) con este formato exacto:
-[
-  {
-    "ciudad": "nombre de la ciudad",
-    "pais": "nombre del país",
-    "tipo_viaje": "cultura|naturaleza|gastronomia|playa|montana|ocio",
-    "precio_estimado": 650,
-    "descripcion": "2 frases atractivas sobre el destino",
-    "clima": "ej: Cálido y soleado, 26°C",
-    "idioma": "idioma principal del país",
-    "duracion_vuelo": "ej: 2h 30min desde Madrid"
-  }
-]`;
+Devuelve SOLO un array JSON válido (sin texto extra ni markdown, SIN saltos de línea en strings):
+[{"ciudad":"nombre de la ciudad","pais":"nombre del país","tipo_viaje":"cultura|naturaleza|gastronomia|playa|montana|ocio","precio_estimado":650,"descripcion":"2 frases atractivas sobre el destino","clima":"ej: Cálido y soleado, 26°C","idioma":"idioma principal","duracion_vuelo":"ej: 2h 30min desde Madrid"}]`;
 
   try {
     const { texto, proveedor } = await generarConIA(prompt);
@@ -130,24 +145,8 @@ Perfil del viajero:
 - Presupuesto diario: ${presupuestoDiario}€ por persona
 - Restricciones alimentarias: ${(restriccionesAlimentarias || []).join(', ') || 'ninguna'}
 
-Devuelve SOLO un array JSON válido (sin texto extra ni markdown):
-[
-  {
-    "dia": 1,
-    "titulo": "Llegada y primera exploración",
-    "actividades": [
-      {
-        "hora": "10:00",
-        "nombre": "nombre del lugar o actividad",
-        "descripcion": "descripción breve de 1-2 frases",
-        "tipo": "cultura|gastronomia|ocio|transporte|alojamiento|naturaleza",
-        "ubicacion": "zona o dirección",
-        "duracion_minutos": 90,
-        "coste_estimado": 15.00
-      }
-    ]
-  }
-]
+Devuelve SOLO un array JSON válido (sin texto extra, sin markdown, SIN saltos de línea en strings, una línea por día):
+[{"dia":1,"titulo":"Llegada y primera exploración","actividades":[{"hora":"10:00","nombre":"lugar o actividad","descripcion":"descripción breve 1-2 frases","tipo":"cultura|gastronomia|ocio|transporte|alojamiento|naturaleza","ubicacion":"zona o dirección","duracion_minutos":90,"coste_estimado":15.0}]}]
 
 Incluye 4-6 actividades por día. Día 1: llegada. Último día: check-out y vuelo de regreso.`;
 
