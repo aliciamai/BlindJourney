@@ -220,10 +220,28 @@ function StepPreferencias({ data, setData, t, perfilLoading }) {
         onToggle={(id) => setData((d) => ({ ...d, restriccionesAlimentarias: toggleItem(d.restriccionesAlimentarias, id) }))} />
 
       <SectionLabel>{t('newTrip.step3.activityLevel')}</SectionLabel>
-      <Box sx={{ px: 1 }}>
-        <Slider value={data.nivelActividadSlider} min={1} max={4} step={1}
-          marks={sliderMarks}
-          onChange={(_, v) => setData((d) => ({ ...d, nivelActividadSlider: v }))} />
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        px: 0,
+      }}>
+        <Box sx={{
+          width: { xs: '90%', sm: '100%' },
+          '& .MuiSlider-markLabel': {
+            fontSize: { xs: '0.55rem', sm: '0.75rem' },
+            whiteSpace: 'nowrap',
+            top: { xs: 'auto', sm: 22 },
+            bottom: { xs: -18, sm: 'auto' },
+            lineHeight: 1,
+          },
+          '& .MuiSlider-rail, & .MuiSlider-track': {
+            height: 6,
+          },
+        }}>
+          <Slider value={data.nivelActividadSlider} min={1} max={4} step={1}
+            marks={sliderMarks}
+            onChange={(_, v) => setData((d) => ({ ...d, nivelActividadSlider: v }))} />
+        </Box>
       </Box>
     </>
   );
@@ -408,8 +426,10 @@ function StepPago({ viaje, onPagar, t }) {
   const [payState, setPayState] = useState('idle'); // 'idle' | 'processing' | 'success'
   const [error, setError] = useState('');
 
-  const importe = viaje?.presupuesto
-    ? Number(viaje.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+  const numViajeros = viaje?.num_viajeros || 1;
+  const total = viaje?.presupuesto ? Number(viaje.presupuesto) * numViajeros : 0;
+  const importe = total
+    ? total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
     : '—';
 
   const handlePagar = async () => {
@@ -457,7 +477,7 @@ function StepPago({ viaje, onPagar, t }) {
             {importe}
           </Typography>
           <Typography sx={{ fontSize: '0.68rem', color: 'var(--bj-text-muted)', mt: 0.5 }}>
-            {t('newTrip.step6.perPersonNote')}
+            {Number(viaje?.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} × {numViajeros} {numViajeros === 1 ? t('newTrip.step1.person') : t('newTrip.step1.people')} · {t('newTrip.step6.allInclusive')}
           </Typography>
         </CardContent>
       </Card>
@@ -553,6 +573,14 @@ export default function NuevoViajePage() {
     if (candidatos.length) sessionStorage.setItem('bj_wizard_candidatos', JSON.stringify(candidatos));
   }, [form, step, viaje, candidatos]);
 
+  // Cleanup sessionStorage when leaving the page
+  useEffect(() => {
+    return () => {
+      ['bj_wizard_step', 'bj_wizard_form', 'bj_wizard_viaje', 'bj_wizard_candidatos']
+        .forEach((k) => sessionStorage.removeItem(k));
+    };
+  }, []);
+
   // Load profile preferences when entering step 2
   useEffect(() => {
     if (step === 2) {
@@ -610,11 +638,14 @@ export default function NuevoViajePage() {
         });
 
         const duracion = form.fechaFin.diff(form.fechaInicio, 'day');
+        const idioma = localStorage.getItem('bj_lang') || 'es';
         const nuevoViaje = await crearViaje({
-          fecha_inicio: form.fechaInicio.format('YYYY-MM-DD'),
-          fecha_fin:    form.fechaFin.format('YYYY-MM-DD'),
+          fecha_inicio:  form.fechaInicio.format('YYYY-MM-DD'),
+          fecha_fin:     form.fechaFin.format('YYYY-MM-DD'),
           duracion,
-          presupuesto:  form.presupuesto,
+          presupuesto:   form.presupuesto,
+          num_viajeros:  form.numViajeros,
+          idioma,
         });
 
         const viajeObj = nuevoViaje.viaje || nuevoViaje;
@@ -681,7 +712,17 @@ export default function NuevoViajePage() {
   return (
     <Box sx={{ px: 2, pt: 2, pb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-        <IconButton onClick={() => { if (step === 5) return; step > 0 ? setStep(step - 1) : navigate(-1); }}
+        <IconButton onClick={() => {
+          if (step === 5) return;
+          if (step > 0) {
+            setStep(step - 1);
+          } else {
+            // Cleanup sessionStorage before leaving
+            ['bj_wizard_step', 'bj_wizard_form', 'bj_wizard_viaje', 'bj_wizard_candidatos']
+              .forEach((k) => sessionStorage.removeItem(k));
+            navigate(-1);
+          }
+        }}
           size="small" sx={{ color: '#f0a500' }}>
           <ArrowBackIcon />
         </IconButton>

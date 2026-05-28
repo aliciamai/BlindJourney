@@ -37,14 +37,16 @@ const obtenerViajePorId = async (req, res, next) => {
 // El destino real queda oculto hasta la revelación.
 const crearViaje = async (req, res, next) => {
   try {
-    const { destino, presupuesto, fechaInicio, duracion } = req.body;
+    const { destino, presupuesto, fecha_inicio, fecha_fin, duracion, num_viajeros, idioma } = req.body;
 
     const viaje = await Viaje.create({
       usuario_id:     req.usuario.id,
-      destino_ciudad: destino   || null,
-      presupuesto:    presupuesto || null,
-      fecha_inicio:   fechaInicio || null,
-      duracion:       duracion    || null,
+      destino_ciudad: destino      || null,
+      presupuesto:    presupuesto  || null,
+      fecha_inicio:   fecha_inicio || null,
+      fecha_fin:      fecha_fin    || null,
+      duracion:       duracion     || null,
+      num_viajeros:   num_viajeros || 1,
       estado:         'pendiente',
     });
 
@@ -59,7 +61,8 @@ const crearViaje = async (req, res, next) => {
         intereses:                 perfil?.intereses                    || [],
         nivelActividad:            perfil?.nivel_actividad              || 'moderado',
         restriccionesAlimentarias: perfil?.restricciones_alimentarias   || [],
-        numViajeros:               1,
+        numViajeros:               viaje.num_viajeros || 1,
+        idioma:                    idioma || 'es',
       });
 
       if (generados && generados.length > 0) {
@@ -126,6 +129,7 @@ const crearViaje = async (req, res, next) => {
 // ── PATCH /api/viajes/:id/revelar ────────────────────────────
 const revelarDestino = async (req, res, next) => {
   try {
+    const { idioma } = req.body;
     const viaje = await Viaje.findOne({
       where: { id: req.params.id, usuario_id: req.usuario.id },
     });
@@ -151,6 +155,7 @@ const revelarDestino = async (req, res, next) => {
         intereses:                 perfil?.intereses                  || [],
         nivelActividad:            perfil?.nivel_actividad            || 'moderado',
         restriccionesAlimentarias: perfil?.restricciones_alimentarias || [],
+        idioma:                    idioma || 'es',
       });
 
       const itinerario = await Itinerario.create({

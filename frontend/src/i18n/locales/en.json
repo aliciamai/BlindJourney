@@ -126,6 +126,7 @@
       "subtitle": "Enter your card details to confirm your trip",
       "totalLabel": "Total to pay",
       "perPersonNote": "Per person · All inclusive",
+      "allInclusive": "All inclusive",
       "cardDetails": "Card details",
       "cardNumber": "Card number",
       "expiry": "Expiry",

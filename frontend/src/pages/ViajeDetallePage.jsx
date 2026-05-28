@@ -224,7 +224,8 @@ export default function ViajeDetallePage() {
   const handleRevelar = async () => {
     setLoadingRevelar(true);
     try {
-      const data = await revelarViaje(id);
+      const idioma = localStorage.getItem('bj_lang') || 'es';
+      const data = await revelarViaje(id, idioma);
       setViaje((v) => ({ ...v, ...data.viaje, destino_revelado: true }));
     } catch (e) {
       setError(e.response?.data?.mensaje || t('common.error', 'Error'));

@@ -221,14 +221,33 @@ export default function PerfilPage() {
           <ChipGroup options={DIETA} selected={prefs.restricciones_alimentarias} onToggle={toggleDieta} />
 
           <SectionLabel>{t('profile.activityLevel')}</SectionLabel>
-          <Box sx={{ px: 1, pb: 1 }}>
-            <Slider
-              value={prefs.nivelActividadSlider}
-              min={1} max={4} step={1}
-              marks={ACTIVITY_MARKS}
-              onChange={(_, v) => setPrefs((p) => ({ ...p, nivelActividadSlider: v }))}
-              sx={{ color: '#f0a500' }}
-            />
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            px: 0,
+            pb: 1,
+          }}>
+            <Box sx={{
+              width: { xs: '90%', sm: '100%' },
+              '& .MuiSlider-markLabel': {
+                fontSize: { xs: '0.55rem', sm: '0.75rem' },
+                whiteSpace: 'nowrap',
+                top: { xs: 'auto', sm: 22 },
+                bottom: { xs: -18, sm: 'auto' },
+                lineHeight: 1,
+              },
+              '& .MuiSlider-rail, & .MuiSlider-track': {
+                height: 6,
+              },
+            }}>
+              <Slider
+                value={prefs.nivelActividadSlider}
+                min={1} max={4} step={1}
+                marks={ACTIVITY_MARKS}
+                onChange={(_, v) => setPrefs((p) => ({ ...p, nivelActividadSlider: v }))}
+                sx={{ color: '#f0a500' }}
+              />
+            </Box>
           </Box>
 
           <Button

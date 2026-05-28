@@ -13,18 +13,18 @@ import client from './client';
 
 /**
  * Obtiene el itinerario de un viaje específico.
- * Parámetros: viajeId (ID del viaje)
+ * Parámetros: viajeId (ID del viaje), idioma (idioma del itinerario)
  * Devuelve: { id, viaje_id, actividades: [ { id, dia, hora, titulo, ... }, ... ] }
  * Nota: Solo disponible después de revelar el destino
  */
-export const getItinerario = (viajeId) =>
-  client.get(`/itinerarios/viaje/${viajeId}`).then((r) => r.data);
+export const getItinerario = (viajeId, idioma = 'es') =>
+  client.get(`/itinerarios/viaje/${viajeId}?idioma=${idioma}`).then((r) => r.data);
 
 /**
  * Regenera el itinerario de un viaje usando IA.
- * Parámetros: viajeId (ID del viaje)
+ * Parámetros: viajeId (ID del viaje), idioma (idioma del itinerario)
  * Devuelve: { id, viaje_id, actividades (nuevas) }
  * Nota: Útil si al usuario no le gusta el itinerario generado inicialmente
  */
-export const regenerarItinerario = (viajeId) =>
-  client.post(`/itinerarios/viaje/${viajeId}/regenerar`).then((r) => r.data);
+export const regenerarItinerario = (viajeId, idioma = 'es') =>
+  client.post(`/itinerarios/viaje/${viajeId}/regenerar`, { idioma }).then((r) => r.data);

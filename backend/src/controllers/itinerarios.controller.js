@@ -8,6 +8,7 @@ const geminiService = require('../services/gemini.service');
 // ── GET /api/itinerarios/viaje/:viajeId ─────────────────────
 const obtenerItinerarioDeViaje = async (req, res, next) => {
   try {
+    const { idioma } = req.query;
     const viaje = await Viaje.findOne({
       where: { id: req.params.viajeId, usuario_id: req.usuario.id },
     });
@@ -38,6 +39,7 @@ const obtenerItinerarioDeViaje = async (req, res, next) => {
           intereses:                 perfil?.intereses                  || [],
           nivelActividad:            perfil?.nivel_actividad            || 'moderado',
           restriccionesAlimentarias: perfil?.restricciones_alimentarias || [],
+          idioma:                    idioma || 'es',
         });
 
         itinerario = await Itinerario.create({
@@ -88,6 +90,7 @@ const obtenerItinerarioDeViaje = async (req, res, next) => {
 // ── POST /api/itinerarios/viaje/:viajeId/regenerar ──────────
 const regenerarItinerario = async (req, res, next) => {
   try {
+    const { idioma } = req.body;
     const viaje = await Viaje.findOne({
       where: { id: req.params.viajeId, usuario_id: req.usuario.id },
     });
@@ -108,6 +111,7 @@ const regenerarItinerario = async (req, res, next) => {
       intereses:                 perfil?.intereses                  || [],
       nivelActividad:            perfil?.nivel_actividad            || 'moderado',
       restriccionesAlimentarias: perfil?.restricciones_alimentarias || [],
+      idioma:                    idioma || 'es',
     });
 
     // 2. Gemini respondió OK — ahora sí borramos el itinerario anterior

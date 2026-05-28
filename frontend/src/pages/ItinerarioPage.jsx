@@ -206,7 +206,8 @@ export default function ItinerarioPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    getItinerario(id)
+    const idioma = localStorage.getItem('bj_lang') || 'es';
+    getItinerario(id, idioma)
       .then((data) => setItinerario(data.itinerario || data))
       .catch(() => setError(t('common.error', 'Error')))
       .finally(() => setLoading(false));
@@ -217,7 +218,8 @@ export default function ItinerarioPage() {
   const handleRegenerar = async () => {
     setRegenerando(true); setError('');
     try {
-      const data = await regenerarItinerario(id);
+      const idioma = localStorage.getItem('bj_lang') || 'es';
+      const data = await regenerarItinerario(id, idioma);
       setItinerario(data.itinerario || data);
     } catch (e) {
       setError(e.response?.data?.error || t('common.error', 'Error'));

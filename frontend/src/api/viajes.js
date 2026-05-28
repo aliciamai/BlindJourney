@@ -35,12 +35,12 @@ export const crearViaje = (data) => client.post('/viajes', data).then((r) => r.d
 
 /**
  * Revela el destino oculto de un viaje.
- * Parámetros: id (ID del viaje)
+ * Parámetros: id (ID del viaje), idioma (idioma para el itinerario)
  * Devuelve: { ..., destino (ahora visible), ciudad, pais }
  * Nota: Después de revelar, el usuario ve el itinerario generado por IA
  */
-export const revelarViaje = (id) =>
-  client.patch(`/viajes/${id}/revelar`).then((r) => r.data);
+export const revelarViaje = (id, idioma = 'es') =>
+  client.patch(`/viajes/${id}/revelar`, { idioma }).then((r) => r.data);
 
 /**
  * Veta un destino candidato durante el wizard de creación.

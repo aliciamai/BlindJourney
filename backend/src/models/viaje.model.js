@@ -26,6 +26,10 @@ const Viaje = sequelize.define('Viaje', {
   presupuesto: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  num_viajeros: {
+    type:         DataTypes.INTEGER,
+    defaultValue: 1,
+  },
   fecha_inicio: {
     type: DataTypes.DATEONLY,
   },
@@ -47,7 +51,7 @@ const Viaje = sequelize.define('Viaje', {
   fecha_revelacion: {
     type: DataTypes.DATE,
   },
-  // Hora límite para la revelación automática (48 h tras la reserva)
+  // Hora límite para la revelación automática (48 h antes de fecha_inicio)
   revelar_en: {
     type: DataTypes.DATE,
   },

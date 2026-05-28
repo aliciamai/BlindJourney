@@ -100,7 +100,9 @@ const generarCandidatos = async ({
   nivelActividad,
   restriccionesAlimentarias,
   numViajeros,
+  idioma = 'es',
 }) => {
+  const idiomaTexto = idioma === 'en' ? 'English' : 'Spanish';
   const prompt = `Eres un experto agente de viajes español. Genera exactamente 12 destinos de viaje sorpresa.
 
 Criterios:
@@ -110,6 +112,8 @@ Criterios:
 - Nivel de actividad: ${nivelActividad || 'moderado'}
 - Restricciones alimentarias: ${(restriccionesAlimentarias || []).join(', ') || 'ninguna'}
 - Viajeros: ${numViajeros || 1}
+
+IMPORTANTE: Responde COMPLETAMENTE en ${idiomaTexto}. Todos los textos (descripciones, tipos de viaje, etc.) deben estar en ${idiomaTexto}.
 
 Devuelve SOLO un array JSON válido (sin texto extra ni markdown, SIN saltos de línea en strings):
 [{"ciudad":"nombre de la ciudad","pais":"nombre del país","tipo_viaje":"cultura|naturaleza|gastronomia|playa|montana|ocio","precio_estimado":650,"descripcion":"2 frases atractivas sobre el destino","clima":"ej: Cálido y soleado, 26°C","idioma":"idioma principal","duracion_vuelo":"ej: 2h 30min desde Madrid"}]`;
@@ -136,8 +140,10 @@ const generarItinerario = async ({
   intereses,
   nivelActividad,
   restriccionesAlimentarias,
+  idioma = 'es',
 }) => {
-  const prompt = `Eres un guía de viajes experto. Crea un itinerario detallado para ${diasViaje} días en ${ciudad}, ${pais}.
+  const idiomaTexto = idioma === 'en' ? 'English' : 'Spanish';
+  const prompt = `Eres un guía de viajes experto. Crea un itinerario COMPLETO de exactamente ${diasViaje} DÍAS en ${ciudad}, ${pais}.
 
 Perfil del viajero:
 - Intereses: ${(intereses || []).join(', ') || 'variados'}
@@ -145,10 +151,19 @@ Perfil del viajero:
 - Presupuesto diario: ${presupuestoDiario}€ por persona
 - Restricciones alimentarias: ${(restriccionesAlimentarias || []).join(', ') || 'ninguna'}
 
-Devuelve SOLO un array JSON válido (sin texto extra, sin markdown, SIN saltos de línea en strings, una línea por día):
-[{"dia":1,"titulo":"Llegada y primera exploración","actividades":[{"hora":"10:00","nombre":"lugar o actividad","descripcion":"descripción breve 1-2 frases","tipo":"cultura|gastronomia|ocio|transporte|alojamiento|naturaleza","ubicacion":"zona o dirección","duracion_minutos":90,"coste_estimado":15.0}]}]
+IMPORTANTE: Responde COMPLETAMENTE en ${idiomaTexto}. Todos los títulos, nombres, descripciones y ubicaciones deben estar en ${idiomaTexto}.
+Devuelve un array JSON con EXACTAMENTE ${diasViaje} objetos, uno por cada día. CADA actividad DEBE incluir ubicacion específica. Sin texto extra, sin markdown, SIN saltos de línea en strings:
+[
+{"dia":1,"titulo":"Llegada y primera exploración","actividades":[{"hora":"10:00","nombre":"llegada al aeropuerto","descripcion":"recepción y traslado al hotel","tipo":"transporte","ubicacion":"Aeropuerto Internacional de ${ciudad}","duracion_minutos":120,"coste_estimado":30},{"hora":"13:30","nombre":"check-in hotel","descripcion":"acomodación en el hotel centro","tipo":"alojamiento","ubicacion":"Centro de ${ciudad}","duracion_minutos":45,"coste_estimado":0},{"hora":"15:00","nombre":"paseo por el centro histórico","descripcion":"exploración de la zona antigua","tipo":"cultura","ubicacion":"Casco Antiguo de ${ciudad}","duracion_minutos":120,"coste_estimado":0},{"hora":"18:00","nombre":"cena local","descripcion":"experiencia culinaria tradicional","tipo":"gastronomia","ubicacion":"Zona de restaurantes de ${ciudad}","duracion_minutos":90,"coste_estimado":25}]},
+{"dia":2,"titulo":"museos y cultura","actividades":[{"hora":"09:00","nombre":"desayuno en café local","descripcion":"desayuno típico","tipo":"gastronomia","ubicacion":"Café en la Plaza Mayor","duracion_minutos":45,"coste_estimado":8},{"hora":"10:30","nombre":"museo principal","descripcion":"visita al museo más importante","tipo":"cultura","ubicacion":"Museo Nacional de ${ciudad}","duracion_minutos":150,"coste_estimado":12}]}
+]
 
-Incluye 4-6 actividades por día. Día 1: llegada. Último día: check-out y vuelo de regreso.`;
+REGLAS:
+- SIEMPRE incluye una ubicacion específica para CADA actividad (nunca campo vacío)
+- La ubicacion debe ser una zona, monumento, o lugar real en ${ciudad}
+- Incluye 4-6 actividades por día
+- Día 1: llegada. Último día: check-out y vuelo de regreso
+- Respeta presupuesto diario`;
 
   try {
     const { texto, proveedor } = await generarConIA(prompt);

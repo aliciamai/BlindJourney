@@ -34,10 +34,30 @@ const crearReserva = async (req, res, next) => {
     });
     if (!viaje) return res.status(404).json({ error: 'Viaje no encontrado' });
 
-    // Elegir un destino al azar de los candidatos NO vetados
+    // Elegir un destino al azar de los candidatos NO vetados, evitando destinos duplicados
     const candidatosDisponibles = viaje.candidatos.filter((c) => !c.vetado);
     if (candidatosDisponibles.length > 0) {
-      const destinoElegido = candidatosDisponibles[Math.floor(Math.random() * candidatosDisponibles.length)];
+      // Obtener todos los viajes anteriores del usuario
+      const viajesAnteriores = await Viaje.findAll({
+        where: { usuario_id: req.usuario.id, id: { [require('sequelize').Op.ne]: viaje_id } },
+        attributes: ['destino_ciudad', 'destino_pais'],
+      });
+
+      // Extraer los destinos que ya tiene
+      const destinosYaVisitados = viajesAnteriores
+        .filter((v) => v.destino_ciudad && v.destino_pais)
+        .map((v) => `${v.destino_ciudad.toLowerCase()}|${v.destino_pais.toLowerCase()}`);
+
+      // Filtrar candidatos para excluir destinos duplicados
+      const candidatosSinDuplicados = candidatosDisponibles.filter((c) => {
+        const destinoKey = `${c.ciudad.toLowerCase()}|${c.pais.toLowerCase()}`;
+        return !destinosYaVisitados.includes(destinoKey);
+      });
+
+      // Elegir de candidatos únicos si los hay, sino de disponibles
+      const listaCandidatos = candidatosSinDuplicados.length > 0 ? candidatosSinDuplicados : candidatosDisponibles;
+      const destinoElegido = listaCandidatos[Math.floor(Math.random() * listaCandidatos.length)];
+
       await viaje.update({
         destino_ciudad: destinoElegido.ciudad,
         destino_pais: destinoElegido.pais,
@@ -106,14 +126,15 @@ const simularPago = async (req, res, next) => {
     const pago = await Pago.create({
       reserva_id:               reserva.id,
       stripe_payment_intent_id: 'pi_demo_' + Date.now(),
-      importe:                  viaje.presupuesto,
+      importe:                  viaje.presupuesto * (viaje.num_viajeros || 1),
       moneda:                   'eur',
       estado:                   'completado',
       fecha_pago:               new Date(),
     });
 
     await reserva.update({ estado: 'confirmada' });
-    const revelarEn = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    const fechaSalida = new Date(viaje.fecha_inicio);
+    const revelarEn = new Date(fechaSalida.getTime() - 48 * 60 * 60 * 1000);
     await viaje.update({ estado: 'confirmado', revelar_en: revelarEn });
 
     res.json({ success: true, reserva, viaje, pago });
